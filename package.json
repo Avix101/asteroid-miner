@@ -1,0 +1,25 @@
+{
+  "name": "asteroid-miner",
+  "version": "1.0.0",
+  "description": "A MVC site that provides a websockets powered 'cookie clicker' experience",
+  "main": "./server/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Avix101/asteroid-miner.git"
+  },
+  "keywords": [
+    "mvc",
+    "socket.io",
+    "clicker",
+    "game"
+  ],
+  "author": "Stasha Blank & Irvin Do",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Avix101/asteroid-miner/issues"
+  },
+  "homepage": "https://github.com/Avix101/asteroid-miner#readme"
+}
