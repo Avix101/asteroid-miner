@@ -41,6 +41,30 @@ const ProfileWindow = (props) => {
   );
 };
 
+const ProgressPanel = (props) => {
+  
+  const progressWidth = {width: `${(props.current / props.total) * 100}%`};
+  
+  return (
+    <div className="container">
+      <div className="jumbotron">
+        <h1>Progress</h1>
+        <hr className="my-4" />
+        <p className="lead">Clicks: {props.current}/{props.total}</p>
+        <div className="progress">
+          <div className="progress-bar progress-bar-striped progress-bar-animated bg-success"
+            role="progressbar"
+            aria-value={props.current}
+            aria-valuemin="0"
+            aria-valuemax={props.total}
+            style={progressWidth}
+          ></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 //Render the main game window
 const renderGame = (width, height) => {
   ReactDOM.render(
@@ -52,7 +76,17 @@ const renderGame = (width, height) => {
   canvas = document.querySelector("#viewport");
   ctx = canvas.getContext('2d');
   
-  //Add event listeners if there are any
+  //Add event listeners
+  canvas.addEventListener('click', processClick);
+  canvas.addEventListener('mousedown', disableExtraActions);
+};
+
+//Render the asteroid's progress panel
+const renderProgressPanel = (current, total) => {
+  ReactDOM.render(
+    <ProgressPanel current={current} total={total} />,
+    document.querySelector("#rightPanel")
+  );
 };
 
 //Add more handlers and components if necessary

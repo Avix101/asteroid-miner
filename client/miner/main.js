@@ -3,11 +3,17 @@ let canvas, ctx, prepCanvas, prepCtx;
 const aspectRatio = 16 / 9;
 const percentageOfScreenWidth = 0.6;
 
+//Static image files
+let galaxyBg;
+
 //Variables to manage socket
 let socket, hash;
 
 //Variables to handle update calls
 let animationFrame;
+
+//Variables relating to gamestate
+let asteroid;
 
 //Current view
 let pageView;
@@ -76,6 +82,7 @@ const init = () => {
   
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
+  galaxyBg = document.querySelector("#galaxyBg");
   
   //Construct prep canvas (for building frames)
   prepCanvas = document.createElement('canvas');
@@ -88,6 +95,8 @@ const init = () => {
   
   //Attach custom socket events
   //socket.on('event', eventFunc);
+  socket.on('spawnAsteroid', spawnAsteroid);
+  socket.on('asteroidUpdate', updateAsteroid);
   
   //Start the update loop
   animationFrame = requestAnimationFrame(update);

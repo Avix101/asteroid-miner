@@ -36,12 +36,41 @@ const displayFrame = () => {
   ctx.restore();
 };
 
+//Draw and update the asteroid, assuming there is one
+const drawAndUpdateAsteroid = () => {
+  if(!asteroid || !asteroid.image){
+    return;
+  }
+  
+  asteroid.update();
+  prepCtx.save();
+  
+  prepCtx.translate(asteroid.x, asteroid.y);
+  prepCtx.rotate(asteroid.radians);
+  
+  prepCtx.drawImage(
+    asteroid.image,
+    -asteroid.image.width / 2,
+    -asteroid.image.height / 2,
+  );
+  
+  prepCtx.restore();
+};
+
+//The main call to draw everything to the prep canvas
 const draw = () => {
   
   //Clear the prep canvas
   clearCanvas(prepCanvas, prepCtx);
   
   //Draw stuff to the prep canvas
+  
+  //If the background image has loaded, draw it to the background of the prep canvas
+  if(galaxyBg){
+    prepCtx.drawImage(galaxyBg, 0, 0, prepCanvas.width, prepCanvas.height);
+  }
+  
+  drawAndUpdateAsteroid();
   
   //Draw the prep canvas to the resized frame of the display canvas
   displayFrame();

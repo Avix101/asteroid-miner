@@ -91,6 +91,12 @@ const redirect = (response) => {
 	window.location = response.redirect;
 };
 
+//Disable extra mouse actions (highlighting text)
+const disableExtraActions = (e) => {
+  e.preventDefault();
+  return false;
+};
+
 //Send an Ajax request to the server to get or post info
 const sendAjax = (type, action, data, success) => {
 	$.ajax({

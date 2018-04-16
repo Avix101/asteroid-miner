@@ -1,5 +1,65 @@
 "use strict";
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Asteroid = function () {
+  function Asteroid(data, location) {
+    var _this = this;
+
+    _classCallCheck(this, Asteroid);
+
+    //Data received from the server
+    this.name = data.name;
+    this.classname = data.classname;
+    this.progress = data.progress;
+    this.toughness = data.toughness;
+
+    //Load asteroid image
+    var image = new Image();
+
+    image.onload = function () {
+      _this.image = image;
+    };
+
+    image.src = data.imageFile;
+
+    //Animation / clientside only data
+    this.x = location.x;
+    this.y = location.y;
+    this.radians = 0;
+    this.rotateSpeed = -Math.random() * 0.01;
+  }
+
+  //Update properties of the asteroid
+
+
+  _createClass(Asteroid, [{
+    key: "update",
+    value: function update() {
+      this.radians = (this.radians + this.rotateSpeed) % (2 * Math.PI);
+    }
+  }, {
+    key: "updateVals",
+
+
+    //Update the asteroid according to changes made by the server
+    value: function updateVals(data) {
+      var keys = Object.keys(data);
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        this[key] = data[key];
+      }
+
+      console.log(this.progress);
+    }
+  }]);
+
+  return Asteroid;
+}();
+"use strict";
+
 //Interpolate between two values given a ratio between 0 and 1
 var lerp = function lerp(val1, val2, ratio) {
   var component1 = (1 - ratio) * val1;
@@ -28,12 +88,37 @@ var displayFrame = function displayFrame() {
   ctx.restore();
 };
 
+//Draw and update the asteroid, assuming there is one
+var drawAndUpdateAsteroid = function drawAndUpdateAsteroid() {
+  if (!asteroid || !asteroid.image) {
+    return;
+  }
+
+  asteroid.update();
+  prepCtx.save();
+
+  prepCtx.translate(asteroid.x, asteroid.y);
+  prepCtx.rotate(asteroid.radians);
+
+  prepCtx.drawImage(asteroid.image, -asteroid.image.width / 2, -asteroid.image.height / 2);
+
+  prepCtx.restore();
+};
+
+//The main call to draw everything to the prep canvas
 var draw = function draw() {
 
   //Clear the prep canvas
   clearCanvas(prepCanvas, prepCtx);
 
   //Draw stuff to the prep canvas
+
+  //If the background image has loaded, draw it to the background of the prep canvas
+  if (galaxyBg) {
+    prepCtx.drawImage(galaxyBg, 0, 0, prepCanvas.width, prepCanvas.height);
+  }
+
+  drawAndUpdateAsteroid();
 
   //Draw the prep canvas to the resized frame of the display canvas
   displayFrame();
@@ -48,12 +133,18 @@ var canvas = void 0,
 var aspectRatio = 16 / 9;
 var percentageOfScreenWidth = 0.6;
 
+//Static image files
+var galaxyBg = void 0;
+
 //Variables to manage socket
 var socket = void 0,
     hash = void 0;
 
 //Variables to handle update calls
 var animationFrame = void 0;
+
+//Variables relating to gamestate
+var asteroid = void 0;
 
 //Current view
 var pageView = void 0;
@@ -127,6 +218,7 @@ var init = function init() {
 
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
+  galaxyBg = document.querySelector("#galaxyBg");
 
   //Construct prep canvas (for building frames)
   prepCanvas = document.createElement('canvas');
@@ -139,6 +231,8 @@ var init = function init() {
 
   //Attach custom socket events
   //socket.on('event', eventFunc);
+  socket.on('spawnAsteroid', spawnAsteroid);
+  socket.on('asteroidUpdate', updateAsteroid);
 
   //Start the update loop
   animationFrame = requestAnimationFrame(update);
@@ -225,6 +319,45 @@ var ProfileWindow = function ProfileWindow(props) {
   );
 };
 
+var ProgressPanel = function ProgressPanel(props) {
+
+  var progressWidth = { width: props.current / props.total * 100 + "%" };
+
+  return React.createElement(
+    "div",
+    { className: "container" },
+    React.createElement(
+      "div",
+      { className: "jumbotron" },
+      React.createElement(
+        "h1",
+        null,
+        "Progress"
+      ),
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Clicks: ",
+        props.current,
+        "/",
+        props.total
+      ),
+      React.createElement(
+        "div",
+        { className: "progress" },
+        React.createElement("div", { className: "progress-bar progress-bar-striped progress-bar-animated bg-success",
+          role: "progressbar",
+          "aria-value": props.current,
+          "aria-valuemin": "0",
+          "aria-valuemax": props.total,
+          style: progressWidth
+        })
+      )
+    )
+  );
+};
+
 //Render the main game window
 var renderGame = function renderGame(width, height) {
   ReactDOM.render(React.createElement(GameWindow, { width: width, height: height }), document.querySelector("#main"));
@@ -233,7 +366,14 @@ var renderGame = function renderGame(width, height) {
   canvas = document.querySelector("#viewport");
   ctx = canvas.getContext('2d');
 
-  //Add event listeners if there are any
+  //Add event listeners
+  canvas.addEventListener('click', processClick);
+  canvas.addEventListener('mousedown', disableExtraActions);
+};
+
+//Render the asteroid's progress panel
+var renderProgressPanel = function renderProgressPanel(current, total) {
+  ReactDOM.render(React.createElement(ProgressPanel, { current: current, total: total }), document.querySelector("#rightPanel"));
 };
 
 //Add more handlers and components if necessary
@@ -257,7 +397,7 @@ var getTokenWithCallback = function getTokenWithCallback(callback) {
     }
   });
 };
-"use strict";
+'use strict';
 
 //The main update call which runs 60 times a second (ideally)
 var update = function update() {
@@ -267,6 +407,39 @@ var update = function update() {
 
   //Request another animation frame for updating the client
   animationFrame = requestAnimationFrame(update);
+};
+
+//Get the mouse position relative to the size of the prep canvas canvas
+var getMouse = function getMouse(e) {
+  var rect = canvas.getBoundingClientRect();
+  var widthRatio = rect.width / prepCanvas.width;
+  var heightRatio = rect.height / prepCanvas.height;
+  return {
+    x: (e.clientX - rect.left) / widthRatio,
+    y: (e.clientY - rect.top) / heightRatio
+  };
+};
+
+//Process a mouse click on the main display canvas
+var processClick = function processClick(e) {
+  var mousePos = getMouse(e);
+  socket.emit('click', { mouse: mousePos });
+};
+
+//Process a request from the server to spawn an asteroid
+var spawnAsteroid = function spawnAsteroid(data) {
+  var location = { x: prepCanvas.width / 2, y: prepCanvas.height / 2 };
+  asteroid = new Asteroid(data.asteroid, location);
+};
+
+//Process a request from the server to update the asteroid
+var updateAsteroid = function updateAsteroid(data) {
+  if (!asteroid) {
+    return;
+  }
+
+  asteroid.updateVals(data.asteroid);
+  renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
 "use strict";
 
@@ -365,6 +538,12 @@ var handleError = function handleError(message, hide) {
 //Redirect the user to a new page
 var redirect = function redirect(response) {
   window.location = response.redirect;
+};
+
+//Disable extra mouse actions (highlighting text)
+var disableExtraActions = function disableExtraActions(e) {
+  e.preventDefault();
+  return false;
 };
 
 //Send an Ajax request to the server to get or post info
