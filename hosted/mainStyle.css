@@ -1,0 +1,11 @@
+.moveDown {
+  margin-top: 50px;
+}
+
+.hidden {
+  display: none;
+}
+
+#viewport {
+  border: 2px solid black;
+}
