@@ -70,6 +70,12 @@ const handleError = (message, hide) => {
   
   let msg = message;
   
+  const modal = document.querySelector("#adContainer div");
+  
+  if(modal){
+    hideModal();
+  }
+  
   if(errorMessage === message){
     errorRepeatCount++;
     msg = `${message} (x${errorRepeatCount})`;

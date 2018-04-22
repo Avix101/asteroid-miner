@@ -11,18 +11,18 @@ const clearCanvas = (cvs, context) => {
 };
 
 //Draw to the display canvas, which is dynamically resizable
-const displayFrame = () => {
+const displayFrame = (cvs, context) => {
   
   //If the display canvas doesn't exist, don't draw to it
-  if(!canvas){
+  if(!cvs){
     return;
   }
   
   //Clear the display canvas, draw from the prep canvas
-  clearCanvas(canvas, ctx);
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(
+  clearCanvas(cvs, context);
+  context.save();
+  context.imageSmoothingEnabled = false;
+  context.drawImage(
     prepCanvas,
     0,
     0,
@@ -30,10 +30,10 @@ const displayFrame = () => {
     prepCanvas.height,
     0,
     0,
-    canvas.width,
-    canvas.height
+    cvs.width,
+    cvs.height
   );
-  ctx.restore();
+  context.restore();
 };
 
 //Draw and update the asteroid, assuming there is one
@@ -73,5 +73,46 @@ const draw = () => {
   drawAndUpdateAsteroid();
   
   //Draw the prep canvas to the resized frame of the display canvas
-  displayFrame();
+  displayFrame(canvas, ctx);
+};
+
+const circle = new Circle(
+  {
+    x: 900,
+    y: 600,
+  },
+  50
+);
+
+setTimeout(() => {
+circle.bindAnimation(ExpandCircle, [500, 900]);
+}, 50);
+
+//The main call to draw ad related content to the ad canvas
+const drawAd = () => {
+  
+  //Clear the prep canvas
+  clearCanvas(prepCanvas, prepCtx);
+  
+  prepCtx.save();
+  prepCtx.fillStyle = "salmon";
+  prepCtx.fillRect(0, 0, prepCanvas.width, prepCanvas.height);
+  
+  //const adTime = adAudio.currentTime / adAudio.duration;
+  const adTime = adAudio.currentTime * 1000;
+  
+  while(adTimeline.length > 0 && adTime >= adTimeline[0].trigger){
+    processNextAdEvent();
+  }
+  
+  const adComponentKeys = Object.keys(adComponents);
+  for(let i = 0; i < adComponentKeys.length; i++){
+    const key = adComponentKeys[i];
+    adComponents[key].draw(prepCtx);
+  }
+  
+  prepCtx.restore();
+  
+  //Draw to the ad canvas
+  displayFrame(adCanvas, adCtx);
 };

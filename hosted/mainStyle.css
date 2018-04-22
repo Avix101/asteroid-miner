@@ -9,3 +9,68 @@
 #viewport {
   border: 2px solid black;
 }
+
+.wiggle {
+  animation-duration: 1.2s;
+  animation-fill-mode: forwards;
+  animation-name: wiggle;
+  animation-iteration-count: infinite;
+}
+
+.show {
+  display: block;
+}
+
+#pageMask {
+  background-color: black;
+  opacity: 0.5 !important;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.modal-dialog {
+  width: 70%;
+  max-width: 70%;
+  margin: auto;
+}
+
+#adModal, #adViewport {
+	animation-duration: 0.3s;
+	animation-fill-mode: forwards;
+}
+
+.show {
+  animation-name: slide-outwards;
+}
+
+.animateExpand {
+  animation-name: expand-down;
+}
+
+.hide-anim {
+  animation-name: slide-inwards;
+}
+
+@keyframes slide-outwards {
+	0% { opacity: 0; transform: scale3d(0, 1, 1);}
+	100% { opacity: 1; transform: scale3d(1, 1, 1);}
+}
+
+@keyframes slide-inwards {
+	0% { opacity: 1; transform: scale3d(1, 1, 1);}
+	100% { opacity: 0; transform: scale3d(0, 1, 1);}
+}
+
+@keyframes expand-down {
+  0% { opacity: 0; transform: scale3d(1, 0, 1);}
+	100% { opacity: 1; transform: scale3d(1, 1, 1);}
+}
+
+@keyframes wiggle {
+  0% { filter: brightness(1.75); transform: rotate(-40deg);}
+  50% { filter: brightness(1); transform: rotate(40deg);}
+  100% { filter: brightness(1.75); transform: rotate(-40deg);}
+}

@@ -4,6 +4,165 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+//The animation class bundles a collection of properties to change over a set period of time
+//It also updates its state if given a timestamp
+var Animation = function () {
+  //Build the animation using the given data
+  function Animation(logistics) {
+    _classCallCheck(this, Animation);
+
+    var time = 0;
+    this.startTime = 0;
+    this.currentTime = time;
+    this.begin = logistics.begin;
+    this.loop = logistics.loop;
+    this.timeToFinish = logistics.timeToFinish;
+    this.propsBegin = logistics.propsBegin;
+    this.propsEnd = logistics.propsEnd;
+    this.propsCurrent = {};
+    this.complete = false;
+
+    var propKeys = Object.keys(this.propsBegin);
+    for (var i = 0; i < propKeys.length; i++) {
+      var key = propKeys[i];
+      this.propsCurrent[key] = this.propsBegin[key];
+    }
+  }
+
+  _createClass(Animation, [{
+    key: "bind",
+
+
+    //Binding an animation sets it's starting time to the current time and begins the animation
+    value: function bind(currentTime) {
+      this.startTime = currentTime;
+      this.currentTime = currentTime;
+    }
+
+    //Animations use the current time to update its current status
+
+  }, {
+    key: "update",
+    value: function update(currentTime) {
+      var timeElapsed = currentTime - this.currentTime;
+      var timeSinceStart = currentTime - this.startTime;
+      this.currentTime += timeElapsed;
+
+      //Don't update if the animation is finished
+      if (timeSinceStart < this.begin) {
+        return;
+      }
+
+      //Calcualte the ratio between start and finish
+      var ratio = (timeSinceStart - this.begin) / this.timeToFinish;
+
+      //The ratio should never be greater than 1
+      if (ratio > 1) {
+        ratio = 1;
+      }
+
+      //Update all properties to reflect the current stage of the animation (using lerp)
+      var propKeys = Object.keys(this.propsCurrent);
+      for (var i = 0; i < propKeys.length; i++) {
+        var key = propKeys[i];
+
+        this.propsCurrent[key] = lerp(this.propsBegin[key], this.propsEnd[key], ratio);
+      }
+
+      //If the animation has reached its end, complete it
+      if (ratio >= 1 && !this.loop) {
+        this.complete = true;
+      } else if (ratio >= 1) {
+        this.startTime = currentTime;
+      }
+    }
+
+    //Copy the values calculated by the animation into a given object
+
+  }, {
+    key: "copyVals",
+    value: function copyVals(obj) {
+      var keys = Object.keys(this.propsCurrent);
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        obj[key] = this.propsCurrent[key];
+      }
+    }
+  }]);
+
+  return Animation;
+}();
+
+;
+"use strict";
+
+function ExpandCircle(amount, duration) {
+  var expandAnimation = new Animation({
+    begin: 0,
+    loop: false,
+    timeToFinish: duration,
+    propsBegin: { size: this.size },
+    propsEnd: { size: this.size + amount }
+  });
+  return expandAnimation;
+};
+
+//Animate an image to expand
+function ExpandImage(width, height, duration) {
+  var expandAnimation = new Animation({
+    begin: 0,
+    loop: false,
+    timeToFinish: duration,
+    propsBegin: { width: this.width, height: this.height },
+    propsEnd: { width: width, height: height }
+  });
+  return expandAnimation;
+};
+
+//Animate something to rotate
+function Rotate(speed) {
+  var newAngle = (this.radians + Math.PI) % (Math.PI * 2);
+  var rotateAnimation = new Animation({
+    begin: 0,
+    loop: true,
+    timeToFinish: speed,
+    propsBegin: { radians: this.radians },
+    propsEnd: { radians: newAngle }
+  });
+  return rotateAnimation;
+};
+
+//Animate a small rotation forward
+function WobbleForward(amount, speed) {
+  var newAngle = this.radians + amount;
+  var rotateAnimation = new Animation({
+    begin: 0,
+    loop: false,
+    timeToFinish: speed,
+    propsBegin: { radians: this.radians },
+    propsEnd: { radians: newAngle }
+  });
+  return rotateAnimation;
+};
+
+//Animate a small rotate backwards
+function WobbleBack(amount, speed) {
+  var newAngle = this.radians - amount;
+  var rotateAnimation = new Animation({
+    begin: 0,
+    loop: false,
+    timeToFinish: speed,
+    propsBegin: { radians: this.radians },
+    propsEnd: { radians: newAngle }
+  });
+  return rotateAnimation;
+};
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var Asteroid = function () {
   function Asteroid(data, location) {
     var _this = this;
@@ -51,13 +210,223 @@ var Asteroid = function () {
         var key = keys[i];
         this[key] = data[key];
       }
-
-      console.log(this.progress);
     }
   }]);
 
   return Asteroid;
 }();
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+//The animatable class bundles an object's info into a single object for rendering
+var Animatable = function () {
+  function Animatable(location, properties) {
+    _classCallCheck(this, Animatable);
+
+    this.x = location.x;
+    this.y = location.y;
+
+    //Set the animatable's properties
+    var propKeys = Object.keys(properties);
+    for (var i = 0; i < propKeys.length; i++) {
+      var key = propKeys[i];
+      this[key] = properties[key];
+    }
+
+    this.color = "#000000";
+    this.radians = 0;
+    this.animation = null;
+    this.animCallback = null;
+    this.opacity = 1;
+  }
+
+  _createClass(Animatable, [{
+    key: "bindAnimation",
+
+
+    //Animations can be bound to an animatable, in which case the object will animate when updated
+    value: function bindAnimation(Animation, args, callback) {
+
+      //Start the animation at the time of bind
+      this.animation = Animation.apply(this, args);
+      this.animation.bind(new Date().getTime());
+
+      //If the animation comes with a callback, set the callback
+      if (callback) {
+        this.animCallback = callback;
+      } else {
+        this.animCallback = null;
+      }
+    }
+  }, {
+    key: "cancelAnimation",
+
+
+    //Cancel an animatable's animation
+    value: function cancelAnimation() {
+      delete this.animation;
+      this.animation = null;
+    }
+  }, {
+    key: "endAnimation",
+
+
+    //End the animatable's animation (same as cancel, but calls the animation callback)
+    value: function endAnimation() {
+      this.cancelAnimation();
+      if (this.animCallback) {
+        this.animCallback(this);
+      }
+    }
+  }, {
+    key: "readyToAnimate",
+
+
+    //Determine if the animatable is ready to animate
+    value: function readyToAnimate() {
+      return this.animation === null;
+    }
+  }, {
+    key: "flipImage",
+
+
+    //Visually flip the animatable
+    value: function flipImage() {
+      this.radians = (this.radians + Math.PI) % (2 * Math.PI);
+    }
+
+    //Update the animatable based on its current animation
+
+  }, {
+    key: "update",
+    value: function update(currentTime) {
+      if (this.animation) {
+        //Update the animation and copy over the new values
+        this.animation.update(currentTime);
+        this.animation.copyVals(this);
+
+        if (this.animation.complete) {
+          this.endAnimation();
+        }
+
+        return true;
+      }
+      return this.animation !== null;
+    }
+  }]);
+
+  return Animatable;
+}();
+
+//The circle class extends the animatable class
+//Every circle has a size attribute
+
+
+var Circle = function (_Animatable) {
+  _inherits(Circle, _Animatable);
+
+  function Circle(location, size) {
+    _classCallCheck(this, Circle);
+
+    return _possibleConstructorReturn(this, (Circle.__proto__ || Object.getPrototypeOf(Circle)).call(this, location, { size: size }));
+  }
+
+  //Method to draw a circle
+
+
+  _createClass(Circle, [{
+    key: "draw",
+    value: function draw(context) {
+      context.fillStyle = this.color;
+
+      var time = new Date().getTime();
+      this.update(time);
+
+      context.beginPath();
+      context.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+      context.fill();
+    }
+  }]);
+
+  return Circle;
+}(Animatable);
+
+;
+
+//The graphic class is basically an image with some extra code added on for drawing
+
+var Graphic = function (_Animatable2) {
+  _inherits(Graphic, _Animatable2);
+
+  function Graphic(location, image, width, height) {
+    _classCallCheck(this, Graphic);
+
+    return _possibleConstructorReturn(this, (Graphic.__proto__ || Object.getPrototypeOf(Graphic)).call(this, location, { image: image, width: width, height: height }));
+  }
+
+  //Method to draw image
+
+
+  _createClass(Graphic, [{
+    key: "draw",
+    value: function draw(context) {
+      var time = new Date().getTime();
+      this.update(time);
+
+      context.save();
+      var x = -this.width / 2;
+      var y = -this.height / 2;
+      context.translate(this.x, this.y);
+      context.rotate(this.radians);
+      context.drawImage(this.image, x, y, this.width, this.height);
+      context.restore();
+    }
+  }]);
+
+  return Graphic;
+}(Animatable);
+
+;
+
+//The text class draws handles drawing text
+
+var Text = function (_Animatable3) {
+  _inherits(Text, _Animatable3);
+
+  function Text(location, text, font, size) {
+    _classCallCheck(this, Text);
+
+    return _possibleConstructorReturn(this, (Text.__proto__ || Object.getPrototypeOf(Text)).call(this, location, { text: text, font: font, size: size }));
+  }
+
+  //Method to draw text
+
+
+  _createClass(Text, [{
+    key: "draw",
+    value: function draw(context) {
+      var time = new Date().getTime();
+      this.update(time);
+
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.font = this.size + "pt " + this.font;
+      context.fillStyle = this.color;
+      context.fillText(this.text, this.x, this.y);
+    }
+  }]);
+
+  return Text;
+}(Animatable);
+
+;
 "use strict";
 
 //Interpolate between two values given a ratio between 0 and 1
@@ -73,19 +442,19 @@ var clearCanvas = function clearCanvas(cvs, context) {
 };
 
 //Draw to the display canvas, which is dynamically resizable
-var displayFrame = function displayFrame() {
+var displayFrame = function displayFrame(cvs, context) {
 
   //If the display canvas doesn't exist, don't draw to it
-  if (!canvas) {
+  if (!cvs) {
     return;
   }
 
   //Clear the display canvas, draw from the prep canvas
-  clearCanvas(canvas, ctx);
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(prepCanvas, 0, 0, prepCanvas.width, prepCanvas.height, 0, 0, canvas.width, canvas.height);
-  ctx.restore();
+  clearCanvas(cvs, context);
+  context.save();
+  context.imageSmoothingEnabled = false;
+  context.drawImage(prepCanvas, 0, 0, prepCanvas.width, prepCanvas.height, 0, 0, cvs.width, cvs.height);
+  context.restore();
 };
 
 //Draw and update the asteroid, assuming there is one
@@ -121,7 +490,45 @@ var draw = function draw() {
   drawAndUpdateAsteroid();
 
   //Draw the prep canvas to the resized frame of the display canvas
-  displayFrame();
+  displayFrame(canvas, ctx);
+};
+
+var circle = new Circle({
+  x: 900,
+  y: 600
+}, 50);
+
+setTimeout(function () {
+  circle.bindAnimation(ExpandCircle, [500, 900]);
+}, 50);
+
+//The main call to draw ad related content to the ad canvas
+var drawAd = function drawAd() {
+
+  //Clear the prep canvas
+  clearCanvas(prepCanvas, prepCtx);
+
+  prepCtx.save();
+  prepCtx.fillStyle = "salmon";
+  prepCtx.fillRect(0, 0, prepCanvas.width, prepCanvas.height);
+
+  //const adTime = adAudio.currentTime / adAudio.duration;
+  var adTime = adAudio.currentTime * 1000;
+
+  while (adTimeline.length > 0 && adTime >= adTimeline[0].trigger) {
+    processNextAdEvent();
+  }
+
+  var adComponentKeys = Object.keys(adComponents);
+  for (var i = 0; i < adComponentKeys.length; i++) {
+    var key = adComponentKeys[i];
+    adComponents[key].draw(prepCtx);
+  }
+
+  prepCtx.restore();
+
+  //Draw to the ad canvas
+  displayFrame(adCanvas, adCtx);
 };
 "use strict";
 
@@ -130,8 +537,16 @@ var canvas = void 0,
     ctx = void 0,
     prepCanvas = void 0,
     prepCtx = void 0;
+var adCanvas = void 0,
+    adCtx = void 0;
 var aspectRatio = 16 / 9;
 var percentageOfScreenWidth = 0.6;
+
+//Variables to handle ads
+var adTimeline = [];
+var adComponents = {};
+var showingAd = false;
+var adAudio = void 0;
 
 //Static image files
 var galaxyBg = void 0;
@@ -192,6 +607,11 @@ var loadView = function loadView() {
     case "#highscores":
       {
         renderHighscores();
+        break;
+      }
+    case "#galaxy":
+      {
+        renderPayToWin();
         break;
       }
     case "#profile":
@@ -319,6 +739,256 @@ var ProfileWindow = function ProfileWindow(props) {
   );
 };
 
+//Construct a window for buying galaxy bucks (the best currency in the universe!
+var PayToWinWindow = function PayToWinWindow(props) {
+  return React.createElement(
+    "div",
+    { className: "container" },
+    React.createElement(
+      "div",
+      { className: "row justify-content-center" },
+      React.createElement(
+        "h1",
+        null,
+        "Galaxy Bucks - Only the Best Currency in the Universe!"
+      )
+    ),
+    React.createElement(
+      "div",
+      { className: "row justify-content-center moveDown" },
+      React.createElement(
+        "div",
+        { className: "col-lg-3" },
+        React.createElement(
+          "div",
+          { className: "jumbotron justify-content-center" },
+          React.createElement(
+            "h2",
+            { className: "text-success" },
+            "Free"
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "p",
+            { className: "lead" },
+            "Watch an advertisement from our sponsor Robo Corp\xAE, to earn some Galaxy Bucks for free! (Note* Payment of 30 seconds of your time is required by law in order to qualify for this Galaxy Bucks offer)"
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "div",
+            { className: "text-center" },
+            React.createElement(
+              "button",
+              { className: "btn btn-lg btn-primary", onClick: loadAd },
+              "Watch Ad"
+            )
+          )
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "col-lg-3" },
+        React.createElement(
+          "div",
+          { className: "jumbotron justify-content-center" },
+          React.createElement(
+            "h2",
+            { className: "text-success" },
+            "Tier 1"
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "ul",
+            { className: "lead" },
+            React.createElement(
+              "li",
+              null,
+              "Cost: $1"
+            ),
+            React.createElement(
+              "li",
+              null,
+              "GBs: 1000"
+            ),
+            React.createElement(
+              "li",
+              null,
+              "Value: Good"
+            )
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "div",
+            { className: "text-center" },
+            React.createElement(
+              "button",
+              { className: "btn btn-lg btn-primary" },
+              "Purchase"
+            )
+          )
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "col-lg-3" },
+        React.createElement(
+          "div",
+          { className: "jumbotron justify-content-center" },
+          React.createElement(
+            "h2",
+            { className: "text-success" },
+            "Tier 2"
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "ul",
+            { className: "lead" },
+            React.createElement(
+              "li",
+              null,
+              "Cost: $5"
+            ),
+            React.createElement(
+              "li",
+              null,
+              "GBs: 6000"
+            ),
+            React.createElement(
+              "li",
+              null,
+              "Value: Great"
+            )
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "div",
+            { className: "text-center" },
+            React.createElement(
+              "button",
+              { className: "btn btn-lg btn-primary" },
+              "Purchase"
+            )
+          )
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "col-lg-3" },
+        React.createElement(
+          "div",
+          { className: "jumbotron justify-content-center" },
+          React.createElement(
+            "h2",
+            { className: "text-success" },
+            "Tier 3"
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "ul",
+            { className: "lead" },
+            React.createElement(
+              "li",
+              null,
+              "Cost: $20"
+            ),
+            React.createElement(
+              "li",
+              null,
+              "GBs: 25000"
+            ),
+            React.createElement(
+              "li",
+              null,
+              "Value: Best"
+            )
+          ),
+          React.createElement("hr", null),
+          React.createElement(
+            "div",
+            { className: "text-center" },
+            React.createElement(
+              "button",
+              { className: "btn btn-lg btn-primary" },
+              "Purchase"
+            )
+          )
+        )
+      )
+    )
+  );
+};
+
+//Construct an ad modal to let the user watch an ad to earn Galaxy Bucks
+var AdModal = function AdModal(props) {
+
+  var modalBody = void 0;
+
+  if (props.render) {
+    var dimensions = calcDisplayDimensions();
+    var ratio = Math.min(window.innerHeight * 0.5 / dimensions.height, 1);
+    dimensions.width *= ratio;
+    dimensions.height *= ratio;
+    modalBody = React.createElement(
+      "div",
+      { className: "justify-content-center text-center" },
+      React.createElement("canvas", { id: "adViewport", className: "animateExpand", width: dimensions.width, height: dimensions.height })
+    );
+  } else {
+    modalBody = React.createElement(
+      "p",
+      null,
+      "Loading Robo Corp\xAE Ad... ",
+      React.createElement("span", { className: "fas fa-sync fa-spin" })
+    );
+  }
+
+  return React.createElement(
+    "div",
+    { id: "adModal", className: "modal show", tabindex: "-1", role: "dialog" },
+    React.createElement("div", { id: "pageMask" }),
+    React.createElement(
+      "div",
+      { className: "modal-dialog", role: "document" },
+      React.createElement(
+        "div",
+        { className: "modal-content" },
+        React.createElement(
+          "div",
+          { className: "modal-header" },
+          React.createElement(
+            "h1",
+            { className: "modal-title" },
+            "Ad from Robo Corp\xAE"
+          ),
+          React.createElement(
+            "button",
+            { className: "close", "data-dismiss": "modal", "aria-label": "Close", onClick: hideModal },
+            React.createElement(
+              "span",
+              { "aria-hidden": "true" },
+              "\xD7"
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "modal-body" },
+          modalBody
+        ),
+        React.createElement(
+          "div",
+          { className: "modal-footer" },
+          React.createElement(
+            "button",
+            { id: "payoutButton", className: "btn btn-lg btn-primary", "data-dismiss": "modal", onClick: hideModal },
+            "Collect 50 GBs"
+          )
+        )
+      )
+    )
+  );
+};
+
 var ProgressPanel = function ProgressPanel(props) {
 
   var progressWidth = { width: props.current / props.total * 100 + "%" };
@@ -371,6 +1041,58 @@ var renderGame = function renderGame(width, height) {
   canvas.addEventListener('mousedown', disableExtraActions);
 };
 
+//Load an ad to display to the user
+var loadAd = function loadAd() {
+  renderAd(false);
+  var payoutButton = document.querySelector("#payoutButton");
+  payoutButton.disabled = true;
+
+  sendAjax('GET', '/getAd', null, function (result) {
+    processAd(result.ad);
+  });
+};
+
+//Render the ad modal (and show an ad to the user)
+var renderAd = function renderAd(render) {
+  ReactDOM.render(React.createElement(AdModal, { render: render }), document.querySelector("#adContainer"));
+
+  if (render) {
+    adCanvas = document.querySelector("#adViewport");
+    adCtx = adCanvas.getContext('2d');
+  }
+
+  var modal = document.querySelector("#adContainer div");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("hide-anim");
+  modal.classList.add("show");
+};
+
+//Hide the ad modal
+var hideModal = function hideModal() {
+  var modal = document.querySelector("#adContainer div");
+
+  if (!modal) {
+    return;
+  }
+
+  if (adAudio) {
+    adAudio.pause();
+    adAudio.currenTime = 0;
+  }
+
+  showingAd = false;
+  modal.classList.add("hide-anim");
+};
+
+//Render the galaxy bucks purchase window
+var renderPayToWin = function renderPayToWin() {
+  ReactDOM.render(React.createElement(PayToWinWindow, null), document.querySelector("#main"));
+};
+
 //Render the asteroid's progress panel
 var renderProgressPanel = function renderProgressPanel(current, total) {
   ReactDOM.render(React.createElement(ProgressPanel, { current: current, total: total }), document.querySelector("#rightPanel"));
@@ -397,13 +1119,17 @@ var getTokenWithCallback = function getTokenWithCallback(callback) {
     }
   });
 };
-'use strict';
+"use strict";
 
 //The main update call which runs 60 times a second (ideally)
 var update = function update() {
 
   //Draw to the canvas (prep first, then display)
-  draw();
+  if (showingAd) {
+    drawAd();
+  } else {
+    draw();
+  }
 
   //Request another animation frame for updating the client
   animationFrame = requestAnimationFrame(update);
@@ -440,6 +1166,107 @@ var updateAsteroid = function updateAsteroid(data) {
 
   asteroid.updateVals(data.asteroid);
   renderProgressPanel(asteroid.progress, asteroid.toughness);
+};
+
+//Process the next part of the ad
+var processNextAdEvent = function processNextAdEvent() {
+  if (adTimeline.length <= 0) {
+    return;
+  }
+
+  //Pull the next event off the ad event stack
+  var adEvent = adTimeline.shift();
+
+  var component = void 0;
+
+  //Create a new ad component or target an existing one
+  if (adComponents[adEvent.id]) {
+    component = adComponents[adEvent.id];
+  } else {
+    switch (adEvent.type) {
+      case "circle":
+        component = new Circle({ x: adEvent.init.x, y: adEvent.init.y }, adEvent.init.size);
+        adComponents[adEvent.id] = component;
+        break;
+      case "image":
+        var image = new Image(adEvent.init.image);
+
+        //Create new graphic component
+        component = new Graphic({ x: adEvent.init.x, y: adEvent.init.y }, image, adEvent.init.width, adEvent.init.height);
+
+        image.onload = function () {
+          adComponents[adEvent.id] = component;
+        };
+        image.src = adEvent.init.image;
+
+        break;
+      case "text":
+        component = new Text({ x: adEvent.init.x, y: adEvent.init.y }, adEvent.init.text, adEvent.init.font, adEvent.init.size);
+        adComponents[adEvent.id] = component;
+        break;
+      default:
+        break;
+    }
+  }
+
+  //Set properties for the target element
+  if (adEvent.set) {
+    var setKeys = Object.keys(adEvent.set);
+    for (var i = 0; i < setKeys.length; i++) {
+      var key = setKeys[i];
+      component[key] = adEvent.set[key];
+    }
+  }
+
+  //Animate the target element
+  if (adEvent.animate) {
+    switch (adEvent.animate.name) {
+      case 'expandCircle':
+        component.bindAnimation(ExpandCircle, adEvent.animate.props);
+        break;
+      case 'expandImage':
+        component.bindAnimation(ExpandImage, adEvent.animate.props);
+        break;
+      case 'rotate':
+        component.bindAnimation(Rotate, adEvent.animate.props);
+        break;
+      case 'wobbleRotate':
+        var wobbleForward = function wobbleForward() {
+          component.bindAnimation(WobbleForward, adEvent.animate.props, wobbleBack);
+        };
+        var wobbleBack = function wobbleBack() {
+          component.bindAnimation(WobbleBack, adEvent.animate.props, wobbleForward);
+        };
+
+        wobbleForward();
+
+      default:
+        break;
+    }
+  }
+};
+
+//Process ad data sent from the server
+var processAd = function processAd(adData) {
+  console.log(adData);
+
+  adTimeline = [];
+  adComponents = {};
+
+  adAudio = new Audio(adData.audio);
+
+  adTimeline = adData.adTimeline;
+
+  adAudio.addEventListener('canplaythrough', function () {
+    renderAd(true);
+    showingAd = true;
+    adAudio.play();
+  });
+
+  adAudio.addEventListener('ended', function () {
+    payoutButton.disabled = false;
+    showingAd = false;
+  });
 };
 "use strict";
 
@@ -521,6 +1348,12 @@ var errorRepeatCount = 1;
 var handleError = function handleError(message, hide) {
 
   var msg = message;
+
+  var modal = document.querySelector("#adContainer div");
+
+  if (modal) {
+    hideModal();
+  }
 
   if (errorMessage === message) {
     errorRepeatCount++;

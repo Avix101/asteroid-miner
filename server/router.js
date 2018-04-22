@@ -14,6 +14,9 @@ const attach = (app) => {
   // Provide access to psuedo-directory /assets which maps to the static assets in /hosted
   app.use('/assets', express.static(path.resolve(`${__dirname}/../hosted`)));
 
+  // Provide access to psuedo-directory /webfonts for fontawesome
+  app.use('/webfonts', express.static(path.resolve(`${__dirname}/../hosted/webfonts/`)));
+
   // Provide favixon when the browser requests it
   app.use(favicon(`${__dirname}/../hosted/img/favicon.png`));
 
@@ -25,6 +28,7 @@ const attach = (app) => {
   app.post('/updatePassword', mid.requiresLogin, controllers.Account.updatePassword);
 
   // Additional routes go here!
+  app.get('/getAd', mid.requiresLogin, controllers.Miner.getAd);
 
   app.get('/logout', mid.requiresLogin, controllers.Account.logout);
   app.get('/miner', mid.requiresLogin, controllers.Miner.main);

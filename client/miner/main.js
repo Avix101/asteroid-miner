@@ -1,7 +1,14 @@
 //Canvas variables
 let canvas, ctx, prepCanvas, prepCtx;
+let adCanvas, adCtx;
 const aspectRatio = 16 / 9;
 const percentageOfScreenWidth = 0.6;
+
+//Variables to handle ads
+let adTimeline = [];
+let adComponents = {};
+let showingAd = false;
+let adAudio;
 
 //Static image files
 let galaxyBg;
@@ -58,6 +65,10 @@ const loadView = () => {
     }
     case "#highscores": {
       renderHighscores();
+      break;
+    }
+    case "#galaxy": {
+      renderPayToWin();
       break;
     }
     case "#profile": {
