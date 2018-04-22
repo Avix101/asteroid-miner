@@ -133,3 +133,19 @@ class Text extends Animatable {
     context.fillText(this.text, this.x, this.y);
   }
 };
+
+//Similar to the Circle class, but draws a rectangle
+class Rectangle extends Animatable {
+  constructor(location, width, height){
+    super(location, { width, height });
+  }
+  
+  //Method to draw the rectangle
+  draw(context){
+    const time = new Date().getTime();
+    this.update(time);
+    
+    context.fillStyle = this.color;
+    context.fillRect(this.x, this.y, this.width, this.height);
+  }
+};

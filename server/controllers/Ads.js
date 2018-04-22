@@ -3,6 +3,51 @@ const Ads = {
     audio: '/assets/aud/Ad_Toothbrush.ogg',
     adTimeline: [
       {
+        id: 'color-banner-1',
+        type: 'rectangle',
+        trigger: 0,
+        init: {
+          x: 1920, y: 0, width: 1920, height: 1080,
+        },
+        set: { color: '#fc9135' },
+      },
+      {
+        id: 'color-banner-2',
+        type: 'rectangle',
+        trigger: 0,
+        init: {
+          x: 0, y: -1080, width: 1920, height: 1080,
+        },
+        set: { color: '#c0fc35' },
+      },
+      {
+        id: 'color-banner-3',
+        type: 'rectangle',
+        trigger: 0,
+        init: {
+          x: -1920, y: 0, width: 1920, height: 1080,
+        },
+        set: { color: '#35fcca' },
+      },
+      {
+        id: 'color-banner-4',
+        type: 'rectangle',
+        trigger: 0,
+        init: {
+          x: 0, y: 1080, width: 1920, height: 1080,
+        },
+        set: { color: '#9835fc' },
+      },
+      {
+        id: 'color-banner-5',
+        type: 'rectangle',
+        trigger: 0,
+        init: {
+          x: -1920, y: -1080, width: 1920, height: 1080,
+        },
+        set: { color: 'salmon' },
+      },
+      {
         id: 'robo-corp-text',
         type: 'text',
         trigger: 0,
@@ -11,6 +56,31 @@ const Ads = {
         },
         set: { color: 'grey' },
         animate: { name: 'changeSize', props: [250, 6000] },
+      },
+      {
+        id: 'color-banner-1',
+        trigger: 1000,
+        animate: { name: 'moveTo', props: [0, 0, 500] },
+      },
+      {
+        id: 'color-banner-2',
+        trigger: 2000,
+        animate: { name: 'moveTo', props: [0, 0, 500] },
+      },
+      {
+        id: 'color-banner-3',
+        trigger: 3000,
+        animate: { name: 'moveTo', props: [0, 0, 500] },
+      },
+      {
+        id: 'color-banner-4',
+        trigger: 4000,
+        animate: { name: 'moveTo', props: [0, 0, 500] },
+      },
+      {
+        id: 'color-banner-5',
+        trigger: 5000,
+        animate: { name: 'moveTo', props: [0, 0, 500] },
       },
       {
         id: 'robo-corp-text',
@@ -26,7 +96,7 @@ const Ads = {
           x: 960, y: 540, width: 0, height: 0, image: '/assets/img/misc/purple_circle.png',
         },
         set: {},
-        animate: { name: 'expandImage', props: [800, 800, 800] },
+        animate: { name: 'changeRect', props: [800, 800, 800] },
       },
       {
         id: 'bg-circle1',
@@ -59,7 +129,7 @@ const Ads = {
           x: 960, y: 540, width: 0, height: 0, image: '/assets/img/misc/toothbrush.png',
         },
         set: {},
-        animate: { name: 'expandImage', props: [200, 400, 200] },
+        animate: { name: 'changeRect', props: [200, 400, 200] },
       },
       {
         id: 'toothbrush',

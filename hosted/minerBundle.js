@@ -133,7 +133,7 @@ function MoveAndSize(x, y, size, duration) {
 }
 
 //Animate an image to expand
-function ExpandImage(width, height, duration) {
+function ChangeRect(width, height, duration) {
   var expandAnimation = new Animation({
     begin: 0,
     loop: false,
@@ -449,6 +449,36 @@ var Text = function (_Animatable3) {
   }]);
 
   return Text;
+}(Animatable);
+
+;
+
+//Similar to the Circle class, but draws a rectangle
+
+var Rectangle = function (_Animatable4) {
+  _inherits(Rectangle, _Animatable4);
+
+  function Rectangle(location, width, height) {
+    _classCallCheck(this, Rectangle);
+
+    return _possibleConstructorReturn(this, (Rectangle.__proto__ || Object.getPrototypeOf(Rectangle)).call(this, location, { width: width, height: height }));
+  }
+
+  //Method to draw the rectangle
+
+
+  _createClass(Rectangle, [{
+    key: "draw",
+    value: function draw(context) {
+      var time = new Date().getTime();
+      this.update(time);
+
+      context.fillStyle = this.color;
+      context.fillRect(this.x, this.y, this.width, this.height);
+    }
+  }]);
+
+  return Rectangle;
 }(Animatable);
 
 ;
@@ -1204,6 +1234,10 @@ var processNextAdEvent = function processNextAdEvent() {
         component = new Circle({ x: adEvent.init.x, y: adEvent.init.y }, adEvent.init.size);
         adComponents[adEvent.id] = component;
         break;
+      case "rectangle":
+        component = new Rectangle({ x: adEvent.init.x, y: adEvent.init.y }, adEvent.init.width, adEvent.init.height);
+        adComponents[adEvent.id] = component;
+        break;
       case "image":
         var image = new Image(adEvent.init.image);
 
@@ -1241,13 +1275,14 @@ var processNextAdEvent = function processNextAdEvent() {
         component.bindAnimation(ChangeSize, adEvent.animate.props);
         break;
       case 'moveTo':
+        console.log("yep");
         component.bindAnimation(MoveTo, adEvent.animate.props);
         break;
       case 'moveAndSize':
         component.bindAnimation(MoveAndSize, adEvent.animate.props);
         break;
-      case 'expandImage':
-        component.bindAnimation(ExpandImage, adEvent.animate.props);
+      case 'changeRect':
+        component.bindAnimation(ChangeRect, adEvent.animate.props);
         break;
       case 'rotate':
         component.bindAnimation(Rotate, adEvent.animate.props);

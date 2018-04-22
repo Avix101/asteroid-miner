@@ -65,6 +65,13 @@ const processNextAdEvent = () => {
         component = new Circle({x: adEvent.init.x, y: adEvent.init.y}, adEvent.init.size);
         adComponents[adEvent.id] = component;
         break;
+      case "rectangle":
+        component = new Rectangle({ x: adEvent.init.x, y: adEvent.init.y },
+          adEvent.init.width,
+          adEvent.init.height,
+        );
+        adComponents[adEvent.id] = component;
+        break;
       case "image":
         const image = new Image(adEvent.init.image);
         
@@ -112,13 +119,14 @@ const processNextAdEvent = () => {
         component.bindAnimation(ChangeSize, adEvent.animate.props);
         break;
       case 'moveTo':
+        console.log("yep");
         component.bindAnimation(MoveTo, adEvent.animate.props);
         break;
       case 'moveAndSize':
         component.bindAnimation(MoveAndSize, adEvent.animate.props);
         break;
-      case 'expandImage':
-        component.bindAnimation(ExpandImage, adEvent.animate.props);
+      case 'changeRect':
+        component.bindAnimation(ChangeRect, adEvent.animate.props);
         break;
       case 'rotate':
         component.bindAnimation(Rotate, adEvent.animate.props);

@@ -41,7 +41,7 @@ function MoveAndSize(x, y, size, duration){
 }
 
 //Animate an image to expand
-function ExpandImage(width, height, duration){
+function ChangeRect(width, height, duration){
   const expandAnimation = new Animation(
     {
       begin: 0,
