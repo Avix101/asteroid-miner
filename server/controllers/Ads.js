@@ -7,9 +7,16 @@ const Ads = {
         type: 'text',
         trigger: 0,
         init: {
-          x: 200, y: 1020, text: 'Robo Corp', font: 'Verdana', size: '48',
+          x: 960, y: 540, text: 'Robo Corp', font: 'Audiowide, Verdana', size: '0',
         },
         set: { color: 'grey' },
+        animate: { name: 'changeSize', props: [250, 6000] },
+      },
+      {
+        id: 'robo-corp-text',
+        type: 'text',
+        trigger: 6000,
+        animate: { name: 'moveAndSize', props: [200, 1040, 48, 1500] },
       },
       {
         id: 'bg-circle1',
@@ -34,7 +41,7 @@ const Ads = {
         trigger: 8500,
         init: { x: 960, y: 540, size: 0 },
         set: { color: '#35d4fc' },
-        animate: { name: 'expandCircle', props: [300, 800] },
+        animate: { name: 'changeSize', props: [300, 800] },
       },
       {
         id: 'bg-circle3',
@@ -42,7 +49,7 @@ const Ads = {
         trigger: 9000,
         init: { x: 960, y: 540, size: 0 },
         set: { color: '#35fc9f' },
-        animate: { name: 'expandCircle', props: [250, 800] },
+        animate: { name: 'changeSize', props: [250, 800] },
       },
       {
         id: 'toothbrush',
@@ -59,6 +66,56 @@ const Ads = {
         type: 'image',
         trigger: 10000,
         animate: { name: 'wobbleRotate', props: [0.5, 960] },
+      },
+      {
+        id: 'space-text',
+        type: 'text',
+        trigger: 19610,
+        init: {
+          x: 1620, y: 540, text: 'SPACE!', font: 'Audiowide, Verdana', size: '0',
+        },
+        set: { color: 'black' },
+        animate: { name: 'changeSize', props: [96, 300] },
+      },
+      {
+        id: '39x-text',
+        type: 'text',
+        trigger: 25500,
+        init: {
+          x: 300, y: 500, text: '39X', font: 'Audiowide, Verdana', size: '0',
+        },
+        set: { color: '#ffffff' },
+        animate: { name: 'changeSize', props: [96, 500] },
+      },
+      {
+        id: '19.95-text',
+        type: 'text',
+        trigger: 27340,
+        init: {
+          x: 300, y: 620, text: '$19.95', font: 'Audiowide, Verdana', size: '0',
+        },
+        set: { color: 'green' },
+        animate: { name: 'changeSize', props: [96, 500] },
+      },
+      {
+        id: 'call-text',
+        type: 'text',
+        trigger: 30610,
+        init: {
+          x: 1400, y: 950, text: 'Call', font: 'Audiowide, Verdana', size: '0',
+        },
+        set: { color: 'white' },
+        animate: { name: 'changeSize', props: [96, 500] },
+      },
+      {
+        id: 'now-text',
+        type: 'text',
+        trigger: 31110,
+        init: {
+          x: 1740, y: 950, text: 'Now!', font: 'Audiowide, Verdana', size: '0',
+        },
+        set: { color: 'white' },
+        animate: { name: 'changeSize', props: [96, 500] },
       },
     ],
   },

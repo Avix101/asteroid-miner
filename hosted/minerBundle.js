@@ -96,16 +96,41 @@ var Animation = function () {
 ;
 "use strict";
 
-function ExpandCircle(amount, duration) {
-  var expandAnimation = new Animation({
+//Animates a change in size
+function ChangeSize(amount, duration) {
+  var sizeAnimation = new Animation({
     begin: 0,
     loop: false,
     timeToFinish: duration,
     propsBegin: { size: this.size },
     propsEnd: { size: this.size + amount }
   });
-  return expandAnimation;
+  return sizeAnimation;
 };
+
+//Animates a movement
+function MoveTo(x, y, duration) {
+  var moveAnimation = new Animation({
+    begin: 0,
+    loop: false,
+    timeToFinish: duration,
+    propsBegin: { x: this.x, y: this.y },
+    propsEnd: { x: x, y: y }
+  });
+  return moveAnimation;
+}
+
+//Animates movement and size change
+function MoveAndSize(x, y, size, duration) {
+  var mixedAnimation = new Animation({
+    begin: 0,
+    loop: false,
+    timeToFinish: duration,
+    propsBegin: { x: this.x, y: this.y, size: this.size },
+    propsEnd: { x: x, y: y, size: size }
+  });
+  return mixedAnimation;
+}
 
 //Animate an image to expand
 function ExpandImage(width, height, duration) {
@@ -492,15 +517,6 @@ var draw = function draw() {
   //Draw the prep canvas to the resized frame of the display canvas
   displayFrame(canvas, ctx);
 };
-
-var circle = new Circle({
-  x: 900,
-  y: 600
-}, 50);
-
-setTimeout(function () {
-  circle.bindAnimation(ExpandCircle, [500, 900]);
-}, 50);
 
 //The main call to draw ad related content to the ad canvas
 var drawAd = function drawAd() {
@@ -1221,8 +1237,14 @@ var processNextAdEvent = function processNextAdEvent() {
   //Animate the target element
   if (adEvent.animate) {
     switch (adEvent.animate.name) {
-      case 'expandCircle':
-        component.bindAnimation(ExpandCircle, adEvent.animate.props);
+      case 'changeSize':
+        component.bindAnimation(ChangeSize, adEvent.animate.props);
+        break;
+      case 'moveTo':
+        component.bindAnimation(MoveTo, adEvent.animate.props);
+        break;
+      case 'moveAndSize':
+        component.bindAnimation(MoveAndSize, adEvent.animate.props);
         break;
       case 'expandImage':
         component.bindAnimation(ExpandImage, adEvent.animate.props);

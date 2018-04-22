@@ -76,18 +76,6 @@ const draw = () => {
   displayFrame(canvas, ctx);
 };
 
-const circle = new Circle(
-  {
-    x: 900,
-    y: 600,
-  },
-  50
-);
-
-setTimeout(() => {
-circle.bindAnimation(ExpandCircle, [500, 900]);
-}, 50);
-
 //The main call to draw ad related content to the ad canvas
 const drawAd = () => {
   

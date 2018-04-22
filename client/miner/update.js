@@ -108,8 +108,14 @@ const processNextAdEvent = () => {
   //Animate the target element
   if(adEvent.animate){
     switch(adEvent.animate.name){
-      case 'expandCircle':
-        component.bindAnimation(ExpandCircle, adEvent.animate.props);
+      case 'changeSize':
+        component.bindAnimation(ChangeSize, adEvent.animate.props);
+        break;
+      case 'moveTo':
+        component.bindAnimation(MoveTo, adEvent.animate.props);
+        break;
+      case 'moveAndSize':
+        component.bindAnimation(MoveAndSize, adEvent.animate.props);
         break;
       case 'expandImage':
         component.bindAnimation(ExpandImage, adEvent.animate.props);
