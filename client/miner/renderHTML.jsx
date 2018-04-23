@@ -5,6 +5,7 @@ const GameWindow = (props) => {
   );
 };
 
+//Constructs a window for purchasing / agreeing to contracts
 const ContractWindow = (props) => {
   return (
     <div className="container">
@@ -12,7 +13,73 @@ const ContractWindow = (props) => {
         <h1 className="display-3">Contract Selection:</h1>
         <p className="lead">Choose wisely.</p>
         <hr className="my-4" />
+        
+        <h2>Standard Contracts</h2>
+        <p className="lead">100% of the profits go to you upon completely mining the asteroid.</p>
+        <div id="basicContracts"></div>
       </div>
+    </div>
+  );
+};
+
+//Builds a list of basic contracts and ads them to the basic contracts section
+const BasicContracts = (props) => {
+  
+  const contractKeys = Object.keys(props.contracts);
+  const contracts = [];
+  for(let i = 0; i < contractKeys.length; i++){
+    const contract = props.contracts[contractKeys[i]];
+    
+    const rewardKeys = Object.keys(contract.rewardChances);
+    const rewards = [];
+    for(let i =0; i < rewardKeys.length; i++){
+      const reward = contract.rewardChances[rewardKeys[i]];
+      rewards.push(
+        <li className="card-text">{rewardKeys[i]}: {reward.min}-{reward.max}</li>
+      );
+    }
+    
+    contracts.push(
+      <li className="list-group-item d-flex">
+        <div className="card border-primary mb-3 contractCard">
+          <div className="card-header justify-content-center">
+            {contract.name}
+            
+            <div className="vAlign pillContainer">
+              <span className="badge badge-primary badge-pill">#{i + 1}</span>
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-sm-4 text-center">
+                  <p className="card-text">Price: {contract.price} Galaxy Bucks</p>
+                  <p className="card-text">Toughness: {contract.toughness} Clicks</p>
+                  <img className="imagePreview" src={`/assets/img/asteroids/${contract.asteroidClass}01.png`} alt="Asteroid Sample" />
+                </div>
+                <div className="col-sm-4">
+                  <p className="card-text">Potential Rewards:
+                    <ul>
+                      {rewards}
+                    </ul>
+                  </p>
+                </div>
+                <div className="col-sm-4 text-center justify-content-center vAlign">
+                  <button className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price}GB)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  }
+  
+  return (
+    <div id="basicContractList">
+      <ul className="list-group">
+        {contracts}
+      </ul>
     </div>
   );
 }
@@ -261,12 +328,25 @@ const renderProgressPanel = (current, total) => {
   );
 };
 
+//Populate contract window with returned contracts
+const populateContractsWindow = (data) => {
+  console.log(data);
+  ReactDOM.render(
+    <BasicContracts contracts={data.basicContracts} />,
+    document.querySelector("#basicContracts")
+  );
+};
+
 //Add more handlers and components if necessary
 const renderContracts = () => {
   ReactDOM.render(
     <ContractWindow />,
     document.querySelector("#main")
   );
+  
+  sendAjax('GET', '/getContracts', null, (result) => {
+		populateContractsWindow(result);
+	});
 };
 
 const renderHighscores = () => {

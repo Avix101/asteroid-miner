@@ -21,6 +21,41 @@
   display: block;
 }
 
+.contractCard {
+  width: 100%;
+}
+
+.inlineBlock {
+  display: inline-block;
+}
+
+.moveRight {
+  margin-left: 20px;
+}
+
+.noBottomMargin {
+  margin-bottom: 0px;
+}
+
+.normalWhitespace {
+  white-space: normal;
+}
+
+.imagePreview {
+  width: 30%;
+}
+
+.vAlign {
+  display: flex;
+  align-items: center;
+}
+
+.pillContainer {
+  float: right;
+  align-items: center;
+  vertical-align: middle;
+}
+
 #pageMask {
   background-color: black;
   opacity: 0.5 !important;

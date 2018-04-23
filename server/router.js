@@ -28,6 +28,7 @@ const attach = (app) => {
   app.post('/updatePassword', mid.requiresLogin, controllers.Account.updatePassword);
 
   // Additional routes go here!
+  app.get('/getContracts', mid.requiresLogin, controllers.Miner.getContracts);
   app.get('/getAd', mid.requiresLogin, controllers.Miner.getAd);
 
   app.get('/logout', mid.requiresLogin, controllers.Account.logout);

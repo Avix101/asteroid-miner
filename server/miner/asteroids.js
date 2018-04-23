@@ -4,6 +4,9 @@ const imageDir = '/hosted/img/asteroids';
 const imageLink = '/assets/img/asteroids/';
 const asteroidStruct = {};
 
+// Asteroid class templates
+const asteroidTemplates = require('./basicContracts.js');
+
 // Dynamically collect all asteroid images within the asteroids/ hosted folder
 fs.readdir(`${__dirname}/../../${imageDir}`, (err, imageFiles) => {
   for (let i = 0; i < imageFiles.length; i++) {
@@ -17,6 +20,7 @@ fs.readdir(`${__dirname}/../../${imageDir}`, (err, imageFiles) => {
       name: asteroidName,
       classname: asteroidClass,
       imageFile,
+      template: asteroidTemplates[asteroidClass],
     };
 
     // Group asteroids by class

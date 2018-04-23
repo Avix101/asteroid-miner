@@ -719,6 +719,7 @@ var GameWindow = function GameWindow(props) {
   return React.createElement("canvas", { id: "viewport", width: props.width, height: props.height });
 };
 
+//Constructs a window for purchasing / agreeing to contracts
 var ContractWindow = function ContractWindow(props) {
   return React.createElement(
     "div",
@@ -736,7 +737,133 @@ var ContractWindow = function ContractWindow(props) {
         { className: "lead" },
         "Choose wisely."
       ),
-      React.createElement("hr", { className: "my-4" })
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "h2",
+        null,
+        "Standard Contracts"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "100% of the profits go to you upon completely mining the asteroid."
+      ),
+      React.createElement("div", { id: "basicContracts" })
+    )
+  );
+};
+
+//Builds a list of basic contracts and ads them to the basic contracts section
+var BasicContracts = function BasicContracts(props) {
+
+  var contractKeys = Object.keys(props.contracts);
+  var contracts = [];
+  for (var i = 0; i < contractKeys.length; i++) {
+    var contract = props.contracts[contractKeys[i]];
+
+    var rewardKeys = Object.keys(contract.rewardChances);
+    var rewards = [];
+    for (var _i = 0; _i < rewardKeys.length; _i++) {
+      var reward = contract.rewardChances[rewardKeys[_i]];
+      rewards.push(React.createElement(
+        "li",
+        { className: "card-text" },
+        rewardKeys[_i],
+        ": ",
+        reward.min,
+        "-",
+        reward.max
+      ));
+    }
+
+    contracts.push(React.createElement(
+      "li",
+      { className: "list-group-item d-flex" },
+      React.createElement(
+        "div",
+        { className: "card border-primary mb-3 contractCard" },
+        React.createElement(
+          "div",
+          { className: "card-header justify-content-center" },
+          contract.name,
+          React.createElement(
+            "div",
+            { className: "vAlign pillContainer" },
+            React.createElement(
+              "span",
+              { className: "badge badge-primary badge-pill" },
+              "#",
+              i + 1
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "card-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement(
+                "div",
+                { className: "col-sm-4 text-center" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Price: ",
+                  contract.price,
+                  " Galaxy Bucks"
+                ),
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Toughness: ",
+                  contract.toughness,
+                  " Clicks"
+                ),
+                React.createElement("img", { className: "imagePreview", src: "/assets/img/asteroids/" + contract.asteroidClass + "01.png", alt: "Asteroid Sample" })
+              ),
+              React.createElement(
+                "div",
+                { className: "col-sm-4" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Potential Rewards:",
+                  React.createElement(
+                    "ul",
+                    null,
+                    rewards
+                  )
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "col-sm-4 text-center justify-content-center vAlign" },
+                React.createElement(
+                  "button",
+                  { className: "btn btn-lg btn-primary normalWhitespace" },
+                  "Purchase Asteroid (",
+                  contract.price,
+                  "GB)"
+                )
+              )
+            )
+          )
+        )
+      )
+    ));
+  }
+
+  return React.createElement(
+    "div",
+    { id: "basicContractList" },
+    React.createElement(
+      "ul",
+      { className: "list-group" },
+      contracts
     )
   );
 };
@@ -1144,9 +1271,19 @@ var renderProgressPanel = function renderProgressPanel(current, total) {
   ReactDOM.render(React.createElement(ProgressPanel, { current: current, total: total }), document.querySelector("#rightPanel"));
 };
 
+//Populate contract window with returned contracts
+var populateContractsWindow = function populateContractsWindow(data) {
+  console.log(data);
+  ReactDOM.render(React.createElement(BasicContracts, { contracts: data.basicContracts }), document.querySelector("#basicContracts"));
+};
+
 //Add more handlers and components if necessary
 var renderContracts = function renderContracts() {
   ReactDOM.render(React.createElement(ContractWindow, null), document.querySelector("#main"));
+
+  sendAjax('GET', '/getContracts', null, function (result) {
+    populateContractsWindow(result);
+  });
 };
 
 var renderHighscores = function renderHighscores() {

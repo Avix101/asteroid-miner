@@ -1,16 +1,17 @@
 // Holds data pertaining to a partiuclar asteroid (including rewards)
 class Asteroid {
   // Determine reward upon completion
-  static calculateReward() {
-    return {
-      iron: Math.floor(Math.random() * 50),
-      ruby: Math.floor(Math.random() * 4),
-    };
-  }
+  static calculateRewards(rewardChances) {
+    const rewards = {};
 
-  // Determine number of clicks
-  static calculateAsteroidToughness() {
-    return 100;
+    const rewardKeys = Object.keys(rewardChances);
+    for (let i = 0; i < rewardKeys.length; i++) {
+      const key = rewardKeys[i];
+      const reward = rewardChances[key];
+      rewards[key] = reward.min + (Math.random() * (reward.max - reward.min));
+    }
+
+    return rewards;
   }
 
   // Creates the initial asteroid
@@ -20,8 +21,8 @@ class Asteroid {
     this.classname = data.classname;
     this.imageFile = data.imageFile;
     this.progress = 0;
-    this.toughness = Asteroid.calculateAsteroidToughness();
-    this.reward = Asteroid.calculateReward();
+    this.toughness = data.template.toughness;
+    this.rewards = Asteroid.calculateRewards(data.template.rewardChances);
   }
 
   // Bundles an asteroid's data to be sent to players
