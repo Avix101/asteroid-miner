@@ -2,7 +2,7 @@
 let canvas, ctx, prepCanvas, prepCtx;
 let adCanvas, adCtx;
 const aspectRatio = 16 / 9;
-const percentageOfScreenWidth = 0.6;
+const percentageOfScreenWidth = 0.45;
 
 //Variables to handle ads
 let adTimeline = [];
@@ -43,6 +43,8 @@ const resizeGame = (e) => {
   if(pageView === "#miner"){
     const dimensions = calcDisplayDimensions();
     renderGame(dimensions.width, dimensions.height);
+  } else if(showingAd){
+    renderAd(true);
   }
 };
 

@@ -8,7 +8,7 @@ class Asteroid {
     for (let i = 0; i < rewardKeys.length; i++) {
       const key = rewardKeys[i];
       const reward = rewardChances[key];
-      rewards[key] = reward.min + (Math.random() * (reward.max - reward.min));
+      rewards[key] = reward.min + Math.floor(Math.random() * (reward.max - reward.min));
     }
 
     return rewards;
@@ -29,9 +29,20 @@ class Asteroid {
   getBundledData() {
     return {
       name: this.name,
+      classname: this.classname,
       imageFile: this.imageFile,
       progress: this.progress,
       toughness: this.toughness,
+    };
+  }
+
+  static getBundledDataFor(asteroid) {
+    return {
+      name: asteroid.name,
+      classname: asteroid.classname,
+      imageFile: asteroid.imageFile,
+      progress: asteroid.progress,
+      toughness: asteroid.toughness,
     };
   }
 

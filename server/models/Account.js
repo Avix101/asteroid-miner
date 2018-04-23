@@ -12,7 +12,7 @@ const keyLength = 64;
 const AccountSchema = new mongoose.Schema({
   username: {
     type: String,
-    require: true,
+    required: true,
     trim: true,
     unique: true,
     match: /^[A-Za-z0-9_\-.]{1,16}$/,
@@ -25,6 +25,14 @@ const AccountSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  bank: {
+    type: Object,
+    required: true,
+  },
+  contracts: {
+    type: Array,
+    required: true,
+  },
   createdDate: {
     type: Date,
     default: Date.now,
@@ -34,6 +42,7 @@ const AccountSchema = new mongoose.Schema({
 // Add a function to convert a dock to an account object
 AccountSchema.statics.toAPI = doc => ({
   username: doc.username,
+  bank: doc.bank,
   _id: doc._id,
 });
 

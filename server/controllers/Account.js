@@ -60,6 +60,10 @@ const signup = (request, response) => {
     const accountData = {
       username: req.body.username,
       salt,
+      bank: {
+        gb: 0, iron: 0, copper: 0, sapphire: 0, emerald: 0, ruby: 0, diamond: 0,
+      },
+      contracts: [],
       password: hash,
       profile_name: req.body.profile_name,
     };
@@ -123,6 +127,46 @@ const updatePassword = (request, response) => {
   });
 };
 
+// 'Purchase' or obtain Galaxy Bucks
+const getGalaxyBucks = (request, response) => {
+  const req = request;
+  const res = response;
+
+  req.body.gb = `${req.body.gb}`;
+
+  // If no Galaxy Bucks amount is specified
+  if (!req.body.gb) {
+    return res.status(400).json({ error: 'Cannot purchase Galaxy Bucks; no amount specified' });
+  }
+
+  // Make sure the user is logged in
+  if (!req.session.account) {
+    return res.status(400).json({ error: 'You must be logged in to purchase Galaxy Bucks' });
+  }
+
+  return Account.AccountModel.findById(req.session.account._id, (err, acc) => {
+    if (err || !acc) {
+      return res.status(400).json({ error: 'You must be logged in to purchase Galaxy Bucks' });
+    }
+
+    // Add requested Galaxy Bucks to account
+    const account = acc;
+    const gb = parseInt(req.body.gb, 10);
+    account.bank.gb += gb;
+
+    // Ensure mongoose updates the user's bank
+    account.markModified('bank');
+    const savePromise = account.save();
+
+    savePromise.then(() => {
+      req.session.account = Account.AccountModel.toAPI(account);
+      res.status(200).json({ message: `${gb} Galaxy Bucks have been credited to your account` });
+    });
+
+    return savePromise.catch(() => res.status(500).json({ error: 'Galaxy Bucks could not be credited to your account' }));
+  });
+};
+
 // Generate a new csrf token for a user
 const getToken = (request, response) => {
   const req = request;
@@ -142,4 +186,5 @@ module.exports = {
   signup,
   updatePassword,
   getToken,
+  getGalaxyBucks,
 };

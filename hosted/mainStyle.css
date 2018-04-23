@@ -2,12 +2,28 @@
   margin-top: 50px;
 }
 
+.pushDown {
+  margin-bottom: 50px;
+}
+
 .hidden {
   display: none;
 }
 
 #viewport {
+  display: block;
+  margin: auto;
+  margin-bottom: 50px;
   border: 2px solid black;
+}
+
+#myContracts {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.fullButton {
+  width: 100%;
 }
 
 .wiggle {

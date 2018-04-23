@@ -17,8 +17,98 @@ const ContractWindow = (props) => {
         <h2>Standard Contracts</h2>
         <p className="lead">100% of the profits go to you upon completely mining the asteroid.</p>
         <div id="basicContracts"></div>
+        <hr />
+        
+        <h2>Partner Contracts</h2>
+        <p className="lead">Profits are split evenly between you and all partners.</p>
+        <div id="partnerContracts"></div>
+        <hr />
+        
+        <h2>Sub Contracts</h2>
+        <p className="lead">You will be paid the specified amount once you deliver the required number of clicks.</p>
+        <div id="subContracts"></div>
       </div>
     </div>
+  );
+};
+
+//Helper function to start mining
+const startMine = (e) => {
+  const contractId = e.target.getAttribute("data-contract-id");
+  
+  if(!contractId){
+    return;
+  }
+  
+  window.location.hash = "#miner";
+};
+
+//Constructs a window displaying the user's contracts
+const MyContractsWindow = (props) => {
+  return (
+    <div className="container">
+      <div className="jumbotron">
+        <h1>My Contracts</h1>
+        <p className="lead">Contracts you own</p>
+        <div id="myContracts"></div>
+        <hr />
+      
+      </div>
+    </div>
+  );
+}
+
+//Helper method to buy a standard contract
+const purchaseContract = (e) => {
+  const asteroidClass = e.target.getAttribute('data-purchase');
+  
+  if(!asteroidClass){
+    return;
+  }
+  
+  getTokenWithCallback((csrfToken) => {
+    const data = `ac=${asteroidClass}&_csrf=${csrfToken}`;
+    sendAjax('POST', '/buyAsteroid', data, (data) => {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+};
+
+//Builds a list of contracts that the user owns
+const MyContracts = (props) => {
+  
+  const contracts = props.data.contracts.map((contract, index) => {
+    return (
+      <li className="list-group-item d-flex">
+        <div className="card border-primary mb-3 contractCard">
+          <div className="card-header justify-content-center">
+            Asteroid Class: {contract.asteroid.classname.toUpperCase()}
+            
+            <div className="vAlign pillContainer">
+              <span className="badge badge-primary badge-pill">#{index + 1}</span>
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-sm-12 text-center">
+                  <p className="card-text">Progress: {contract.asteroid.progress} / {contract.asteroid.toughness}</p>
+                  <button data-contract-id={contract.contractId} onClick={startMine}
+                    className="btn btn-lg btn-primary fullButton">Mine</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  });
+  
+  return (
+    <ul className="list-group">
+      {contracts}
+    </ul>
   );
 };
 
@@ -65,7 +155,8 @@ const BasicContracts = (props) => {
                   </p>
                 </div>
                 <div className="col-sm-4 text-center justify-content-center vAlign">
-                  <button className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price}GB)</button>
+                  <button data-purchase={contract.asteroidClass} onClick={purchaseContract}
+                    className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price} GB)</button>
                 </div>
               </div>
             </div>
@@ -108,6 +199,22 @@ const ProfileWindow = (props) => {
   );
 };
 
+//Helper method to request that the user's account be credited with Galaxy Bucks
+const getGalaxyBucks = (e) => {
+  const amount = e.target.getAttribute('data-gb');
+  
+  if(!amount){
+    return;
+  }
+  
+  getTokenWithCallback((csrfToken) => {
+    const data = `gb=${amount}&_csrf=${csrfToken}`;
+    sendAjax('POST', '/getGalaxyBucks', data, (data) => {
+      handleSuccess(data.message);
+    });
+  });
+};
+
 //Construct a window for buying galaxy bucks (the best currency in the universe!
 const PayToWinWindow = (props) => {
   return (
@@ -140,7 +247,7 @@ const PayToWinWindow = (props) => {
             </ul>
             <hr />
             <div className="text-center">
-              <button className="btn btn-lg btn-primary">Purchase</button>
+              <button onClick={getGalaxyBucks} data-gb="1000" className="btn btn-lg btn-primary">Purchase</button>
             </div>
           </div>
         </div>
@@ -155,7 +262,7 @@ const PayToWinWindow = (props) => {
             </ul>
             <hr />
             <div className="text-center">
-              <button className="btn btn-lg btn-primary">Purchase</button>
+              <button onClick={getGalaxyBucks} data-gb="6000" className="btn btn-lg btn-primary">Purchase</button>
             </div>
           </div>
         </div>
@@ -170,7 +277,7 @@ const PayToWinWindow = (props) => {
             </ul>
             <hr />
             <div className="text-center">
-              <button className="btn btn-lg btn-primary">Purchase</button>
+              <button onClick={getGalaxyBucks} data-gb="25000" className="btn btn-lg btn-primary">Purchase</button>
             </div>
           </div>
         </div>
@@ -198,6 +305,11 @@ const AdModal = (props) => {
     modalBody = <p>Loading Robo Corp&reg; Ad... <span className="fas fa-sync fa-spin"></span></p>;
   }
   
+  const completeAd = (e) => {
+    hideModal(e);
+    getGalaxyBucks(e);
+  }
+  
   return (
     <div id="adModal" className="modal show" tabindex="-1" role="dialog">
       <div id="pageMask"></div>
@@ -213,7 +325,8 @@ const AdModal = (props) => {
             {modalBody}
           </div>
           <div className="modal-footer">
-            <button id="payoutButton" className="btn btn-lg btn-primary" data-dismiss="modal" onClick={hideModal}>Collect 50 GBs</button>
+            <button id="payoutButton" data-gb="50" className="btn btn-lg btn-primary"
+              data-dismiss="modal" onClick={completeAd}>Collect 50 GBs</button>
           </div>
         </div>
       </div>
@@ -337,12 +450,30 @@ const populateContractsWindow = (data) => {
   );
 };
 
+//Populate already owned contracts with data sent from server
+const populateMyContractsWindow = (data) => {
+  console.log(data);
+  ReactDOM.render(
+    <MyContracts data={data} />,
+    document.querySelector("#myContracts")
+  );
+};
+
 //Add more handlers and components if necessary
 const renderContracts = () => {
   ReactDOM.render(
     <ContractWindow />,
     document.querySelector("#main")
   );
+  
+  ReactDOM.render(
+    <MyContractsWindow />,
+    document.querySelector("#leftPanel")
+  );
+  
+  sendAjax('GET', '/getMyContracts', null, (result) => {
+    populateMyContractsWindow(result);
+  });
   
   sendAjax('GET', '/getContracts', null, (result) => {
 		populateContractsWindow(result);

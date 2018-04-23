@@ -28,7 +28,10 @@ const attach = (app) => {
   app.post('/updatePassword', mid.requiresLogin, controllers.Account.updatePassword);
 
   // Additional routes go here!
+  app.post('/getGalaxyBucks', mid.requiresLogin, controllers.Account.getGalaxyBucks);
+  app.post('/buyAsteroid', mid.requiresLogin, controllers.Miner.buyAsteroid);
   app.get('/getContracts', mid.requiresLogin, controllers.Miner.getContracts);
+  app.get('/getMyContracts', mid.requiresLogin, controllers.Miner.getMyContracts);
   app.get('/getAd', mid.requiresLogin, controllers.Miner.getAd);
 
   app.get('/logout', mid.requiresLogin, controllers.Account.logout);

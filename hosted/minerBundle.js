@@ -586,7 +586,7 @@ var canvas = void 0,
 var adCanvas = void 0,
     adCtx = void 0;
 var aspectRatio = 16 / 9;
-var percentageOfScreenWidth = 0.6;
+var percentageOfScreenWidth = 0.45;
 
 //Variables to handle ads
 var adTimeline = [];
@@ -628,6 +628,8 @@ var resizeGame = function resizeGame(e) {
   if (pageView === "#miner") {
     var dimensions = calcDisplayDimensions();
     renderGame(dimensions.width, dimensions.height);
+  } else if (showingAd) {
+    renderAd(true);
   }
 };
 
@@ -748,8 +750,151 @@ var ContractWindow = function ContractWindow(props) {
         { className: "lead" },
         "100% of the profits go to you upon completely mining the asteroid."
       ),
-      React.createElement("div", { id: "basicContracts" })
+      React.createElement("div", { id: "basicContracts" }),
+      React.createElement("hr", null),
+      React.createElement(
+        "h2",
+        null,
+        "Partner Contracts"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Profits are split evenly between you and all partners."
+      ),
+      React.createElement("div", { id: "partnerContracts" }),
+      React.createElement("hr", null),
+      React.createElement(
+        "h2",
+        null,
+        "Sub Contracts"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "You will be paid the specified amount once you deliver the required number of clicks."
+      ),
+      React.createElement("div", { id: "subContracts" })
     )
+  );
+};
+
+//Helper function to start mining
+var startMine = function startMine(e) {
+  var contractId = e.target.getAttribute("data-contract-id");
+
+  if (!contractId) {
+    return;
+  }
+
+  window.location.hash = "#miner";
+};
+
+//Constructs a window displaying the user's contracts
+var MyContractsWindow = function MyContractsWindow(props) {
+  return React.createElement(
+    "div",
+    { className: "container" },
+    React.createElement(
+      "div",
+      { className: "jumbotron" },
+      React.createElement(
+        "h1",
+        null,
+        "My Contracts"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Contracts you own"
+      ),
+      React.createElement("div", { id: "myContracts" }),
+      React.createElement("hr", null)
+    )
+  );
+};
+
+//Helper method to buy a standard contract
+var purchaseContract = function purchaseContract(e) {
+  var asteroidClass = e.target.getAttribute('data-purchase');
+
+  if (!asteroidClass) {
+    return;
+  }
+
+  getTokenWithCallback(function (csrfToken) {
+    var data = "ac=" + asteroidClass + "&_csrf=" + csrfToken;
+    sendAjax('POST', '/buyAsteroid', data, function (data) {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+};
+
+//Builds a list of contracts that the user owns
+var MyContracts = function MyContracts(props) {
+
+  var contracts = props.data.contracts.map(function (contract, index) {
+    return React.createElement(
+      "li",
+      { className: "list-group-item d-flex" },
+      React.createElement(
+        "div",
+        { className: "card border-primary mb-3 contractCard" },
+        React.createElement(
+          "div",
+          { className: "card-header justify-content-center" },
+          "Asteroid Class: ",
+          contract.asteroid.classname.toUpperCase(),
+          React.createElement(
+            "div",
+            { className: "vAlign pillContainer" },
+            React.createElement(
+              "span",
+              { className: "badge badge-primary badge-pill" },
+              "#",
+              index + 1
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "card-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement(
+                "div",
+                { className: "col-sm-12 text-center" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Progress: ",
+                  contract.asteroid.progress,
+                  " / ",
+                  contract.asteroid.toughness
+                ),
+                React.createElement(
+                  "button",
+                  { "data-contract-id": contract.contractId, onClick: startMine,
+                    className: "btn btn-lg btn-primary fullButton" },
+                  "Mine"
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+  });
+
+  return React.createElement(
+    "ul",
+    { className: "list-group" },
+    contracts
   );
 };
 
@@ -844,10 +989,11 @@ var BasicContracts = function BasicContracts(props) {
                 { className: "col-sm-4 text-center justify-content-center vAlign" },
                 React.createElement(
                   "button",
-                  { className: "btn btn-lg btn-primary normalWhitespace" },
+                  { "data-purchase": contract.asteroidClass, onClick: purchaseContract,
+                    className: "btn btn-lg btn-primary normalWhitespace" },
                   "Purchase Asteroid (",
                   contract.price,
-                  "GB)"
+                  " GB)"
                 )
               )
             )
@@ -910,6 +1056,22 @@ var ProfileWindow = function ProfileWindow(props) {
       React.createElement("hr", { className: "my-4" })
     )
   );
+};
+
+//Helper method to request that the user's account be credited with Galaxy Bucks
+var getGalaxyBucks = function getGalaxyBucks(e) {
+  var amount = e.target.getAttribute('data-gb');
+
+  if (!amount) {
+    return;
+  }
+
+  getTokenWithCallback(function (csrfToken) {
+    var data = "gb=" + amount + "&_csrf=" + csrfToken;
+    sendAjax('POST', '/getGalaxyBucks', data, function (data) {
+      handleSuccess(data.message);
+    });
+  });
 };
 
 //Construct a window for buying galaxy bucks (the best currency in the universe!
@@ -995,7 +1157,7 @@ var PayToWinWindow = function PayToWinWindow(props) {
             { className: "text-center" },
             React.createElement(
               "button",
-              { className: "btn btn-lg btn-primary" },
+              { onClick: getGalaxyBucks, "data-gb": "1000", className: "btn btn-lg btn-primary" },
               "Purchase"
             )
           )
@@ -1038,7 +1200,7 @@ var PayToWinWindow = function PayToWinWindow(props) {
             { className: "text-center" },
             React.createElement(
               "button",
-              { className: "btn btn-lg btn-primary" },
+              { onClick: getGalaxyBucks, "data-gb": "6000", className: "btn btn-lg btn-primary" },
               "Purchase"
             )
           )
@@ -1081,7 +1243,7 @@ var PayToWinWindow = function PayToWinWindow(props) {
             { className: "text-center" },
             React.createElement(
               "button",
-              { className: "btn btn-lg btn-primary" },
+              { onClick: getGalaxyBucks, "data-gb": "25000", className: "btn btn-lg btn-primary" },
               "Purchase"
             )
           )
@@ -1114,6 +1276,11 @@ var AdModal = function AdModal(props) {
       React.createElement("span", { className: "fas fa-sync fa-spin" })
     );
   }
+
+  var completeAd = function completeAd(e) {
+    hideModal(e);
+    getGalaxyBucks(e);
+  };
 
   return React.createElement(
     "div",
@@ -1153,7 +1320,8 @@ var AdModal = function AdModal(props) {
           { className: "modal-footer" },
           React.createElement(
             "button",
-            { id: "payoutButton", className: "btn btn-lg btn-primary", "data-dismiss": "modal", onClick: hideModal },
+            { id: "payoutButton", "data-gb": "50", className: "btn btn-lg btn-primary",
+              "data-dismiss": "modal", onClick: completeAd },
             "Collect 50 GBs"
           )
         )
@@ -1277,9 +1445,21 @@ var populateContractsWindow = function populateContractsWindow(data) {
   ReactDOM.render(React.createElement(BasicContracts, { contracts: data.basicContracts }), document.querySelector("#basicContracts"));
 };
 
+//Populate already owned contracts with data sent from server
+var populateMyContractsWindow = function populateMyContractsWindow(data) {
+  console.log(data);
+  ReactDOM.render(React.createElement(MyContracts, { data: data }), document.querySelector("#myContracts"));
+};
+
 //Add more handlers and components if necessary
 var renderContracts = function renderContracts() {
   ReactDOM.render(React.createElement(ContractWindow, null), document.querySelector("#main"));
+
+  ReactDOM.render(React.createElement(MyContractsWindow, null), document.querySelector("#leftPanel"));
+
+  sendAjax('GET', '/getMyContracts', null, function (result) {
+    populateMyContractsWindow(result);
+  });
 
   sendAjax('GET', '/getContracts', null, function (result) {
     populateContractsWindow(result);
