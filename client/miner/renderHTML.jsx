@@ -76,6 +76,23 @@ const purchaseContract = (e) => {
   });
 };
 
+// Buy a contract as a partner one
+const purchaseAsPartnerContract = (e) => {
+  const asteroidClass = e.target.getAttribute('data-purchase');
+  
+  if(!asteroidClass){
+    return;
+  }
+  
+  getTokenWithCallback((csrfToken) => {
+    const data = `ac=${asteroidClass}&_csrf=${csrfToken}`;
+    sendAjax('POST', '/buyPartnerAsteroid', data, (data) => {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+}
+
 //Builds a list of contracts that the user owns
 const MyContracts = (props) => {
   
@@ -158,6 +175,8 @@ const BasicContracts = (props) => {
                 <div className="col-sm-4 text-center justify-content-center vAlign">
                   <button data-purchase={contract.asteroidClass} onClick={purchaseContract}
                     className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price} GB)</button>
+                  <button data-purchase={contract.asteroidClass} onClick={purchaseAsPartnerContract}
+                    className="btn btn-lg btn-primary normalWhitespace">Purchase As Partner ({contract.price} GB)</button>
                 </div>
               </div>
             </div>
@@ -174,7 +193,7 @@ const BasicContracts = (props) => {
       </ul>
     </div>
   );
-}
+};
 
 const HighscoreWindow = (props) => {
   return (
@@ -456,6 +475,15 @@ const populateContractsWindow = (data) => {
   );
 };
 
+// To Do: Make PartnerContracts react object
+const populatePartnerContractsWindow = (data) => {
+    console.log(data);
+//    ReactDOM.render(
+//    <PartnerContracts contracts={data.openContracts} />,
+//    document.querySelector("#partnerContracts")
+//  );
+}
+
 //Populate already owned contracts with data sent from server
 const populateMyContractsWindow = (data) => {
   console.log(data);
@@ -488,6 +516,9 @@ const renderContracts = () => {
   
   sendAjax('GET', '/getContracts', null, (result) => {
 		populateContractsWindow(result);
+	});
+    sendAjax('GET', '/getPartnerContracts', null, (result) => {
+		populatePartnerContractsWindow(result);
 	});
 };
 

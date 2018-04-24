@@ -297,6 +297,12 @@ var handleError = function handleError(message, hide) {
 
   var msg = message;
 
+  var modal = document.querySelector("#adContainer div");
+
+  if (modal) {
+    hideModal();
+  }
+
   if (errorMessage === message) {
     errorRepeatCount++;
     msg = message + " (x" + errorRepeatCount + ")";
@@ -313,6 +319,12 @@ var handleError = function handleError(message, hide) {
 //Redirect the user to a new page
 var redirect = function redirect(response) {
   window.location = response.redirect;
+};
+
+//Disable extra mouse actions (highlighting text)
+var disableExtraActions = function disableExtraActions(e) {
+  e.preventDefault();
+  return false;
 };
 
 //Send an Ajax request to the server to get or post info

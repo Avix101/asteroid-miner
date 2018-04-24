@@ -10,6 +10,7 @@ const { Asteroid } = classes;
 const models = require('./../models');
 
 const { Contract } = models;
+const { PartnerContract } = models;
 const { Account } = models;
 
 // Import basic contracts
@@ -31,6 +32,28 @@ const getContracts = (req, res) => {
 
   // Return list of basic contracts (add in player contracts as well)
   return res.status(200).json({ basicContracts });
+};
+
+// Get all available partner contracts
+const getPartnerContracts = (req, res) => {
+  PartnerContract.PartnerContractModel.findOpenContracts((err, docs) => {
+    if (err) {
+      return res.status(500).json({ error: 'Could not retrieve contracts' });
+    }
+
+    const openContracts = [];
+    for (let i = 0; i < docs.length; i++) {
+      if (docs[i]._doc.partners.length < docs[i]._doc.maximumPartners) {
+        openContracts.push(docs[i]._doc);
+      }
+    }
+
+    if (!openContracts) {
+      return res.status(500).json({ error: 'No contracts available at this time.' });
+    }
+
+    return res.status(200).json({ openContracts });
+  });
 };
 
 // Get contracts belonging to a user
@@ -107,6 +130,64 @@ const buyAsteroid = (request, response) => {
   });
 };
 
+// Purchase a contract as a partner one
+
+const buyPartnerAsteroid = (request, response) => {
+  const req = request;
+  const res = response;
+
+  req.body.ac = `${req.body.ac}`;
+
+  if (!basicContracts[req.body.ac]) {
+    return res.status(400).json({ error: 'Could not retrieve unknown standard contract' });
+  }
+
+  if (req.session.account.bank.gb < basicContracts[req.body.ac].price) {
+    return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
+  }
+
+  return Account.AccountModel.findById(req.session.account._id, (err, acc) => {
+    if (err || !acc) {
+      return res.status(400).json({ error: 'Could not find your account' });
+    }
+
+    const account = acc;
+    account.bank.gb -= basicContracts[req.body.ac].price;
+    req.session.account.bank.gb = account.bank.gb;
+    account.markModified('bank');
+    const accountSave = account.save();
+
+    accountSave.then(() => {
+      req.session.account = Account.AccountModel.toAPI(account);
+
+      const template = asteroidTemplates.getRandomTemplate(req.body.ac);
+      const newAsteroid = new Asteroid('temp', template, true);
+
+      const contractData = {
+        ownerId: req.session.account._id,
+        maximumPartners: 2, // replace 2 with number of maximum partners per contract
+        partners: [],
+        asteroid: newAsteroid,
+      };
+
+      const newContract = new PartnerContract.PartnerContractModel(contractData);
+      const savePromise = newContract.save();
+
+      savePromise.then(() => {
+        res.status(201).json({ message: 'Contract successfully created' });
+      });
+
+      savePromise.catch(() => {
+        res.status(500).json({ error: 'Contract could not be created' });
+      });
+    });
+
+    return accountSave.catch(() => {
+      res.status(400).json({ error: 'Could not find your account' });
+    });
+  });
+};
+
 // Return a random ad from Robo Corp
 const getAd = (req, res) => {
   const randomAd = Ads.getRandomAd();
@@ -121,7 +202,9 @@ const getAd = (req, res) => {
 module.exports = {
   main,
   getContracts,
+  getPartnerContracts,
   getMyContracts,
   buyAsteroid,
+  buyPartnerAsteroid,
   getAd,
 };

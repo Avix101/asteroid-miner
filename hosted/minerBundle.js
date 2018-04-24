@@ -833,6 +833,23 @@ var purchaseContract = function purchaseContract(e) {
   });
 };
 
+// Buy a contract as a partner one
+var purchaseAsPartnerContract = function purchaseAsPartnerContract(e) {
+  var asteroidClass = e.target.getAttribute('data-purchase');
+
+  if (!asteroidClass) {
+    return;
+  }
+
+  getTokenWithCallback(function (csrfToken) {
+    var data = "ac=" + asteroidClass + "&_csrf=" + csrfToken;
+    sendAjax('POST', '/buyPartnerAsteroid', data, function (data) {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+};
+
 //Builds a list of contracts that the user owns
 var MyContracts = function MyContracts(props) {
 
@@ -994,6 +1011,14 @@ var BasicContracts = function BasicContracts(props) {
                   { "data-purchase": contract.asteroidClass, onClick: purchaseContract,
                     className: "btn btn-lg btn-primary normalWhitespace" },
                   "Purchase Asteroid (",
+                  contract.price,
+                  " GB)"
+                ),
+                React.createElement(
+                  "button",
+                  { "data-purchase": contract.asteroidClass, onClick: purchaseAsPartnerContract,
+                    className: "btn btn-lg btn-primary normalWhitespace" },
+                  "Purchase As Partner (",
                   contract.price,
                   " GB)"
                 )
@@ -1454,6 +1479,14 @@ var populateContractsWindow = function populateContractsWindow(data) {
   ReactDOM.render(React.createElement(BasicContracts, { contracts: data.basicContracts }), document.querySelector("#basicContracts"));
 };
 
+var populatePartnerContractsWindow = function populatePartnerContractsWindow(data) {
+  console.log(data);
+  //    ReactDOM.render(
+  //    <PartnerContracts contracts={data.basicContracts} />,
+  //    document.querySelector("#partnerContracts")
+  //  );
+};
+
 //Populate already owned contracts with data sent from server
 var populateMyContractsWindow = function populateMyContractsWindow(data) {
   console.log(data);
@@ -1477,6 +1510,9 @@ var renderContracts = function renderContracts() {
 
   sendAjax('GET', '/getContracts', null, function (result) {
     populateContractsWindow(result);
+  });
+  sendAjax('GET', '/getPartnerContracts', null, function (result) {
+    populatePartnerContractsWindow(result);
   });
 };
 

@@ -30,7 +30,9 @@ const attach = (app) => {
   // Additional routes go here!
   app.post('/getGalaxyBucks', mid.requiresLogin, controllers.Account.getGalaxyBucks);
   app.post('/buyAsteroid', mid.requiresLogin, controllers.Miner.buyAsteroid);
+  app.post('/buyPartnerAsteroid', mid.requiresLogin, controllers.Miner.buyPartnerAsteroid);
   app.get('/getContracts', mid.requiresLogin, controllers.Miner.getContracts);
+  app.get('/getPartnerContracts', mid.requiresLogin, controllers.Miner.getPartnerContracts);
   app.get('/getMyContracts', mid.requiresLogin, controllers.Miner.getMyContracts);
   app.get('/getAd', mid.requiresLogin, controllers.Miner.getAd);
 
