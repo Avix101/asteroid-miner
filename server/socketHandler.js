@@ -5,9 +5,27 @@ const xxh = require('xxhashjs');
 const miner = require('./miner');
 // const roomHandler = require('./instanceHandler.js'); //Import later when used
 
-// const models = require('./models'); //Import later when used
+const models = require('./models');
+
+const { Contract } = models;
 
 let io;
+
+// Function to verify the integrity of data sent via sockets
+const verifyDataIntegrity = (data, expectedKeys) => {
+  let verified = true;
+
+  if (!data) {
+    return false;
+  }
+
+  // Verify that the expected keys are present
+  for (let i = 0; i < expectedKeys.length; i++) {
+    const key = expectedKeys[i];
+    verified = data[key] !== undefined;
+  }
+  return verified;
+};
 
 const init = (ioInstance) => {
   io = ioInstance;
@@ -27,7 +45,7 @@ const init = (ioInstance) => {
 
     // If the the game room doesn't exist, create it.
     // Otherwise send the current asteroid to the player
-    if (!miner.game.hasGame('lobby')) {
+    /* if (!miner.game.hasGame('lobby')) {
       miner.game.createGame('lobby');
       miner.game.generateAsteroid('lobby', (asteroid) => {
         io.sockets.in('lobby').emit('spawnAsteroid', { asteroid });
@@ -35,7 +53,46 @@ const init = (ioInstance) => {
     } else {
       const asteroid = miner.game.getAsteroid('lobby');
       socket.emit('spawnAsteroid', { asteroid });
-    }
+    } */
+
+    // Process a request to start mining
+    socket.on('mine', (data) => {
+      // Ensure the integrity of data sent via sockets
+      if (!verifyDataIntegrity(data, ['contractId'])) {
+        return;
+      }
+
+      const id = data.contractId;
+
+      // Make a new game room or add the user to an existing one
+      if (!miner.game.hasGame(id)) {
+        Contract.ContractModel.findById(id, (err, contract) => {
+          if (err || !contract) {
+            socket.emit('errorMessage', { error: 'Could not find contract' });
+            return;
+          }
+
+          // Have the socket join the new gameroom
+          socket.leave(socket.roomJoined);
+          socket.join(id);
+          socket.roomJoined = id;
+
+          miner.game.createGame(id);
+          miner.game.generateAsteroid(id, contract, (asteroid) => {
+            io.sockets.in(id).emit('spawnAsteroid', { asteroid });
+          });
+        });
+      } else {
+        const asteroid = miner.game.getAsteroid(id);
+
+        // Have the socket join the new gameroom
+        socket.leave(socket.roomJoined);
+        socket.join(id);
+        socket.roomJoined = id;
+
+        socket.emit('spawnAsteroid', { asteroid });
+      }
+    });
 
     // Process clicks sent to the server
     socket.on('click', (data) => {

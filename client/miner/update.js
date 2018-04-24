@@ -45,6 +45,11 @@ const updateAsteroid = (data) => {
   renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
 
+//Process an error message sent via sockets
+const processSocketError = (data) => {
+  handleError(data.error);
+};
+
 //Process the next part of the ad
 const processNextAdEvent = () => {
   if(adTimeline.length <= 0){

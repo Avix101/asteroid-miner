@@ -41,6 +41,7 @@ const startMine = (e) => {
   }
   
   window.location.hash = "#miner";
+  socket.emit('mine', { contractId });
 };
 
 //Constructs a window displaying the user's contracts
@@ -223,7 +224,7 @@ const PayToWinWindow = (props) => {
         <h1>Galaxy Bucks - Only the Best Currency in the Universe!</h1>
       </div>
       <div className="row justify-content-center moveDown">
-        <div className="col-lg-3">
+        <div className="col-lg-12">
           <div className="jumbotron justify-content-center">
             <h2 className="text-success">Free</h2>
             <hr />
@@ -236,7 +237,9 @@ const PayToWinWindow = (props) => {
             </div>
           </div>
         </div>
-        <div className="col-lg-3">
+      </div>
+      <div className="row justify-content-center">
+        <div className="col-lg-4">
           <div className="jumbotron justify-content-center">
             <h2 className="text-success">Tier 1</h2>
             <hr />
@@ -251,7 +254,7 @@ const PayToWinWindow = (props) => {
             </div>
           </div>
         </div>
-        <div className="col-lg-3">
+        <div className="col-lg-4">
           <div className="jumbotron justify-content-center">
             <h2 className="text-success">Tier 2</h2>
             <hr />
@@ -266,7 +269,7 @@ const PayToWinWindow = (props) => {
             </div>
           </div>
         </div>
-        <div className="col-lg-3">
+        <div className="col-lg-4">
           <div className="jumbotron justify-content-center">
             <h2 className="text-success">Tier 3</h2>
             <hr />
@@ -365,6 +368,9 @@ const renderGame = (width, height) => {
     document.querySelector("#main")
   );
   
+  //Render my contracts panel
+  renderMyContractsPanel();
+  
   //Hook up viewport (display canvas to JS code)
   canvas = document.querySelector("#viewport");
   ctx = canvas.getContext('2d');
@@ -459,13 +465,8 @@ const populateMyContractsWindow = (data) => {
   );
 };
 
-//Add more handlers and components if necessary
-const renderContracts = () => {
-  ReactDOM.render(
-    <ContractWindow />,
-    document.querySelector("#main")
-  );
-  
+//Render the 'MyContracts' side panel
+const renderMyContractsPanel = () => {
   ReactDOM.render(
     <MyContractsWindow />,
     document.querySelector("#leftPanel")
@@ -474,6 +475,16 @@ const renderContracts = () => {
   sendAjax('GET', '/getMyContracts', null, (result) => {
     populateMyContractsWindow(result);
   });
+};
+
+//Add more handlers and components if necessary
+const renderContracts = () => {
+  ReactDOM.render(
+    <ContractWindow />,
+    document.querySelector("#main")
+  );
+  
+  renderMyContractsPanel();
   
   sendAjax('GET', '/getContracts', null, (result) => {
 		populateContractsWindow(result);

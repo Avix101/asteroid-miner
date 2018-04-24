@@ -80,7 +80,7 @@ const buyAsteroid = (request, response) => {
       req.session.account = Account.AccountModel.toAPI(account);
 
       const template = asteroidTemplates.getRandomTemplate(req.body.ac);
-      const newAsteroid = new Asteroid('temp', template);
+      const newAsteroid = new Asteroid('temp', template, true);
 
       const contractData = {
         ownerId: req.session.account._id,

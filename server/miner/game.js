@@ -1,6 +1,6 @@
 // Do game logic here
 const physicsHandler = require('./collision.js');
-const asteroidTemplates = require('./asteroids.js');
+// const asteroidTemplates = require('./asteroids.js');
 
 // Import custom class
 const classes = require('./../classes');
@@ -85,9 +85,9 @@ const getAsteroid = (roomId) => {
   return game.asteroid.getBundledData();
 };
 
-const generateAsteroid = (roomId, callback) => {
-  const template = asteroidTemplates.getRandomTemplate('a');
-  const newAsteroid = new Asteroid(roomId, template);
+const generateAsteroid = (roomId, contract, callback) => {
+  console.log(contract);
+  const newAsteroid = new Asteroid(roomId, contract, false);
   const game = getGame(roomId);
 
   game.asteroid = newAsteroid;

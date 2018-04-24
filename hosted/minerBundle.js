@@ -701,6 +701,7 @@ var init = function init() {
   //socket.on('event', eventFunc);
   socket.on('spawnAsteroid', spawnAsteroid);
   socket.on('asteroidUpdate', updateAsteroid);
+  socket.on('errorMessage', processSocketError);
 
   //Start the update loop
   animationFrame = requestAnimationFrame(update);
@@ -788,6 +789,7 @@ var startMine = function startMine(e) {
   }
 
   window.location.hash = "#miner";
+  socket.emit('mine', { contractId: contractId });
 };
 
 //Constructs a window displaying the user's contracts
@@ -1093,7 +1095,7 @@ var PayToWinWindow = function PayToWinWindow(props) {
       { className: "row justify-content-center moveDown" },
       React.createElement(
         "div",
-        { className: "col-lg-3" },
+        { className: "col-lg-12" },
         React.createElement(
           "div",
           { className: "jumbotron justify-content-center" },
@@ -1119,10 +1121,14 @@ var PayToWinWindow = function PayToWinWindow(props) {
             )
           )
         )
-      ),
+      )
+    ),
+    React.createElement(
+      "div",
+      { className: "row justify-content-center" },
       React.createElement(
         "div",
-        { className: "col-lg-3" },
+        { className: "col-lg-4" },
         React.createElement(
           "div",
           { className: "jumbotron justify-content-center" },
@@ -1165,7 +1171,7 @@ var PayToWinWindow = function PayToWinWindow(props) {
       ),
       React.createElement(
         "div",
-        { className: "col-lg-3" },
+        { className: "col-lg-4" },
         React.createElement(
           "div",
           { className: "jumbotron justify-content-center" },
@@ -1208,7 +1214,7 @@ var PayToWinWindow = function PayToWinWindow(props) {
       ),
       React.createElement(
         "div",
-        { className: "col-lg-3" },
+        { className: "col-lg-4" },
         React.createElement(
           "div",
           { className: "jumbotron justify-content-center" },
@@ -1373,6 +1379,9 @@ var ProgressPanel = function ProgressPanel(props) {
 var renderGame = function renderGame(width, height) {
   ReactDOM.render(React.createElement(GameWindow, { width: width, height: height }), document.querySelector("#main"));
 
+  //Render my contracts panel
+  renderMyContractsPanel();
+
   //Hook up viewport (display canvas to JS code)
   canvas = document.querySelector("#viewport");
   ctx = canvas.getContext('2d');
@@ -1451,15 +1460,20 @@ var populateMyContractsWindow = function populateMyContractsWindow(data) {
   ReactDOM.render(React.createElement(MyContracts, { data: data }), document.querySelector("#myContracts"));
 };
 
-//Add more handlers and components if necessary
-var renderContracts = function renderContracts() {
-  ReactDOM.render(React.createElement(ContractWindow, null), document.querySelector("#main"));
-
+//Render the 'MyContracts' side panel
+var renderMyContractsPanel = function renderMyContractsPanel() {
   ReactDOM.render(React.createElement(MyContractsWindow, null), document.querySelector("#leftPanel"));
 
   sendAjax('GET', '/getMyContracts', null, function (result) {
     populateMyContractsWindow(result);
   });
+};
+
+//Add more handlers and components if necessary
+var renderContracts = function renderContracts() {
+  ReactDOM.render(React.createElement(ContractWindow, null), document.querySelector("#main"));
+
+  renderMyContractsPanel();
 
   sendAjax('GET', '/getContracts', null, function (result) {
     populateContractsWindow(result);
@@ -1529,6 +1543,11 @@ var updateAsteroid = function updateAsteroid(data) {
 
   asteroid.updateVals(data.asteroid);
   renderProgressPanel(asteroid.progress, asteroid.toughness);
+};
+
+//Process an error message sent via sockets
+var processSocketError = function processSocketError(data) {
+  handleError(data.error);
 };
 
 //Process the next part of the ad
