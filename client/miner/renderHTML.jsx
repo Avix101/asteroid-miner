@@ -54,6 +54,15 @@ const MyContractsWindow = (props) => {
         <div id="myContracts"></div>
         <hr />
       
+        <h1>Sub Contracts</h1>
+        <p className="lead">Monitor your sub contracts</p>
+        <div>  
+          <button onClick={renderSubContractModal}
+            className="btn btn-lg btn-primary fullButton">Draft Sub Contract</button>
+        </div>
+        <div id="mySubContracts"></div>
+        <hr />
+      
       </div>
     </div>
   );
@@ -173,10 +182,12 @@ const BasicContracts = (props) => {
                   </p>
                 </div>
                 <div className="col-sm-4 text-center justify-content-center vAlign">
-                  <button data-purchase={contract.asteroidClass} onClick={purchaseContract}
-                    className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price} GB)</button>
-                  <button data-purchase={contract.asteroidClass} onClick={purchaseAsPartnerContract}
-                    className="btn btn-lg btn-primary normalWhitespace">Purchase As Partner ({contract.price} GB)</button>
+                  <p className="contractButtonContainer">
+                    <button data-purchase={contract.asteroidClass} onClick={purchaseContract}
+                      className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price} GB)</button>
+                    <button data-purchase={contract.asteroidClass} onClick={purchaseAsPartnerContract}
+                      className="btn btn-lg btn-primary normalWhitespace">Purchase As Partner ({contract.price} GB)</button>
+                  </p>
                 </div>
               </div>
             </div>
@@ -240,9 +251,12 @@ const PayToWinWindow = (props) => {
   return (
     <div className="container">
       <div className="row justify-content-center">
-        <h1>Galaxy Bucks - Only the Best Currency in the Universe!</h1>
+        <h1>Galaxy Bucks</h1>
       </div>
-      <div className="row justify-content-center moveDown">
+      <div className="row justify-content-center">
+        <p className="lead">Only the Best Currency in the Universe!</p>
+      </div>
+      <div className="row justify-content-center">
         <div className="col-lg-12">
           <div className="jumbotron justify-content-center">
             <h2 className="text-success">Free</h2>
@@ -356,6 +370,123 @@ const AdModal = (props) => {
   );
 };
 
+//Contruct a modal to handle drafting a sub contract
+const SubContractModal = (props) => {
+  
+  const contractOptions = props.contracts.map((contract) => {
+    return (
+      <option value={contract.contractId}>Class {contract.asteroid.classname.toUpperCase()} asteroid
+       -> Progress: {contract.asteroid.progress} / {contract.asteroid.toughness}
+      </option>
+    );
+  });
+  
+  
+  
+  return (
+    <div id="subContractModal" className="modal show" tabindex="-1" role="dialog">
+      <div id="pageMask"></div>
+      <div className="modal-dialog" role="document">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h1 className="modal-title">
+              Sub Contract Draft <span className="fas fa-edit"></span>
+            </h1>
+            <button className="close" data-dismiss="modal" aria-label="Close" onClick={hideModal}>
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div className="modal-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-xl-3"></div>
+                <div className="col-xl-6">
+                  <form id="subContractForm" className="form">
+                    <label htmlFor="contract" className="form-input-label">Contract</label>
+                    <select name="contract" className="custom-select">
+                      {contractOptions}
+                    </select>
+                    <label htmlFor="clicks" className="form-input-label">Clicks Requested</label>
+                    <input name="clicks" className="form-control" type="number" min="0" max="1000000" />
+                    <label className="form-input-label">Resources Given</label>
+                    <div className="row justify-content-center">
+                      <div className="col-sm-4 text-center">
+                        <label className="form-input-label">Galaxy Bucks: </label>
+                      </div>
+                      <div className="col-sm-8">
+                        <input name="gb" className="form-control" type="number" min="0" max="1000000" />
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="row justify-content-center">
+                      <div className="col-sm-4 text-center">
+                        <label className="form-input-label">Iron: </label>
+                      </div>
+                      <div className="col-sm-8">
+                        <input name="iron" className="form-control" type="number" min="0" max="1000000" />
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="row justify-content-center">
+                      <div className="col-sm-4 text-center">
+                        <label className="form-input-label">Copper: </label>
+                      </div>
+                      <div className="col-sm-8">
+                        <input name="copper" className="form-control" type="number" min="0" max="1000000" />
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="row justify-content-center">
+                      <div className="col-sm-4 text-center">
+                        <label className="form-input-label">Sapphires: </label>
+                      </div>
+                      <div className="col-sm-8">
+                        <input name="sapphire" className="form-control" type="number" min="0" max="1000000" />
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="row justify-content-center">
+                      <div className="col-sm-4 text-center">
+                        <label className="form-input-label">Emeralds: </label>
+                      </div>
+                      <div className="col-sm-8">
+                        <input name="emerald" className="form-control" type="number" min="0" max="1000000" />
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="row justify-content-center">
+                      <div className="col-sm-4 text-center">
+                        <label className="form-input-label">Rubies: </label>
+                      </div>
+                      <div className="col-sm-8">
+                        <input name="ruby" className="form-control" type="number" min="0" max="1000000" />
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="row justify-content-center">
+                      <div className="col-sm-4 text-center">
+                        <label className="form-input-label">Diamonds: </label>
+                      </div>
+                      <div className="col-sm-8">
+                        <input name="diamond" className="form-control" type="number" min="0" max="1000000" />
+                      </div>
+                    </div>
+                  </form>
+                </div>
+                <div className="col-xl-3"></div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button id="payoutButton" data-contract-id="" className="btn btn-lg btn-primary"
+              data-dismiss="modal" onClick={hideModal}>Draft Sub Contract</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ProgressPanel = (props) => {
   
   const progressWidth = {width: `${(props.current / props.total) * 100}%`};
@@ -433,22 +564,49 @@ const renderAd = (render) => {
 }
 
 //Hide the ad modal
-const hideModal = () => {
-  const modal = document.querySelector("#adContainer div");
+const hideModal = (e) => {
+  const adModal = document.querySelector("#adContainer");
+  const subContractModal = document.querySelector("#subContractModalContainer");
+  
+  if(!adModal && !subContractModal){
+    return;
+  }
+  
+  if(e){
+    if(adModal.contains(e.target)){
+    
+      if(adAudio){
+        adAudio.pause();
+        adAudio.currenTime = 0;
+      }
+      
+      showingAd = false;
+      document.querySelector("#adContainer div").classList.add("hide-anim");
+    } else if(subContractModal.contains(e.target)){
+      document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+    }
+  } else {
+    document.querySelector("#adContainer div").classList.add("hide-anim");
+    document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+  }
+};
+
+//Render the sub contract modal
+const renderSubContractModal = () => {
+  ReactDOM.render(
+    <SubContractModal contracts={availableContracts} />,
+    document.querySelector("#subContractModalContainer")
+  );
+  
+  const modal = document.querySelector("#subContractModalContainer div");
   
   if(!modal){
     return;
   }
   
-  if(adAudio){
-    adAudio.pause();
-    adAudio.currenTime = 0;
-  }
-  
-  showingAd = false;
-  modal.classList.add("hide-anim");
+  modal.classList.remove("hide-anim");
+  modal.classList.add("show");
 };
-
 
 //Render the galaxy bucks purchase window
 const renderPayToWin = () => {
@@ -494,6 +652,7 @@ const populateMyContractsWindow = (data) => {
 };
 
 //Render the 'MyContracts' side panel
+let availableContracts = [];
 const renderMyContractsPanel = () => {
   ReactDOM.render(
     <MyContractsWindow />,
@@ -501,6 +660,7 @@ const renderMyContractsPanel = () => {
   );
   
   sendAjax('GET', '/getMyContracts', null, (result) => {
+    availableContracts = result.contracts;
     populateMyContractsWindow(result);
   });
 };

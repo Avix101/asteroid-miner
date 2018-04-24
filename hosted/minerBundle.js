@@ -811,6 +811,28 @@ var MyContractsWindow = function MyContractsWindow(props) {
         "Contracts you own"
       ),
       React.createElement("div", { id: "myContracts" }),
+      React.createElement("hr", null),
+      React.createElement(
+        "h1",
+        null,
+        "Sub Contracts"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Monitor your sub contracts"
+      ),
+      React.createElement(
+        "div",
+        null,
+        React.createElement(
+          "button",
+          { onClick: renderSubContractModal,
+            className: "btn btn-lg btn-primary fullButton" },
+          "Draft Sub Contract"
+        )
+      ),
+      React.createElement("div", { id: "mySubContracts" }),
       React.createElement("hr", null)
     )
   );
@@ -1007,20 +1029,24 @@ var BasicContracts = function BasicContracts(props) {
                 "div",
                 { className: "col-sm-4 text-center justify-content-center vAlign" },
                 React.createElement(
-                  "button",
-                  { "data-purchase": contract.asteroidClass, onClick: purchaseContract,
-                    className: "btn btn-lg btn-primary normalWhitespace" },
-                  "Purchase Asteroid (",
-                  contract.price,
-                  " GB)"
-                ),
-                React.createElement(
-                  "button",
-                  { "data-purchase": contract.asteroidClass, onClick: purchaseAsPartnerContract,
-                    className: "btn btn-lg btn-primary normalWhitespace" },
-                  "Purchase As Partner (",
-                  contract.price,
-                  " GB)"
+                  "p",
+                  { className: "contractButtonContainer" },
+                  React.createElement(
+                    "button",
+                    { "data-purchase": contract.asteroidClass, onClick: purchaseContract,
+                      className: "btn btn-lg btn-primary normalWhitespace" },
+                    "Purchase Asteroid (",
+                    contract.price,
+                    " GB)"
+                  ),
+                  React.createElement(
+                    "button",
+                    { "data-purchase": contract.asteroidClass, onClick: purchaseAsPartnerContract,
+                      className: "btn btn-lg btn-primary normalWhitespace" },
+                    "Purchase As Partner (",
+                    contract.price,
+                    " GB)"
+                  )
                 )
               )
             )
@@ -1112,12 +1138,21 @@ var PayToWinWindow = function PayToWinWindow(props) {
       React.createElement(
         "h1",
         null,
-        "Galaxy Bucks - Only the Best Currency in the Universe!"
+        "Galaxy Bucks"
       )
     ),
     React.createElement(
       "div",
-      { className: "row justify-content-center moveDown" },
+      { className: "row justify-content-center" },
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Only the Best Currency in the Universe!"
+      )
+    ),
+    React.createElement(
+      "div",
+      { className: "row justify-content-center" },
       React.createElement(
         "div",
         { className: "col-lg-12" },
@@ -1361,6 +1396,241 @@ var AdModal = function AdModal(props) {
   );
 };
 
+//Contruct a modal to handle drafting a sub contract
+var SubContractModal = function SubContractModal(props) {
+
+  var contractOptions = props.contracts.map(function (contract) {
+    return React.createElement(
+      "option",
+      { value: contract.contractId },
+      "Class ",
+      contract.asteroid.classname.toUpperCase(),
+      " asteroid -> Progress: ",
+      contract.asteroid.progress,
+      " / ",
+      contract.asteroid.toughness
+    );
+  });
+
+  return React.createElement(
+    "div",
+    { id: "subContractModal", className: "modal show", tabindex: "-1", role: "dialog" },
+    React.createElement("div", { id: "pageMask" }),
+    React.createElement(
+      "div",
+      { className: "modal-dialog", role: "document" },
+      React.createElement(
+        "div",
+        { className: "modal-content" },
+        React.createElement(
+          "div",
+          { className: "modal-header" },
+          React.createElement(
+            "h1",
+            { className: "modal-title" },
+            "Sub Contract Draft ",
+            React.createElement("span", { className: "fas fa-edit" })
+          ),
+          React.createElement(
+            "button",
+            { className: "close", "data-dismiss": "modal", "aria-label": "Close", onClick: hideModal },
+            React.createElement(
+              "span",
+              { "aria-hidden": "true" },
+              "\xD7"
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "modal-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement("div", { className: "col-xl-3" }),
+              React.createElement(
+                "div",
+                { className: "col-xl-6" },
+                React.createElement(
+                  "form",
+                  { id: "subContractForm", className: "form" },
+                  React.createElement(
+                    "label",
+                    { htmlFor: "contract", className: "form-input-label" },
+                    "Contract"
+                  ),
+                  React.createElement(
+                    "select",
+                    { name: "contract", className: "custom-select" },
+                    contractOptions
+                  ),
+                  React.createElement(
+                    "label",
+                    { htmlFor: "clicks", className: "form-input-label" },
+                    "Clicks Requested"
+                  ),
+                  React.createElement("input", { name: "clicks", className: "form-control", type: "number", min: "0", max: "1000000" }),
+                  React.createElement(
+                    "label",
+                    { className: "form-input-label" },
+                    "Resources Given"
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "row justify-content-center" },
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-4 text-center" },
+                      React.createElement(
+                        "label",
+                        { className: "form-input-label" },
+                        "Galaxy Bucks: "
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-8" },
+                      React.createElement("input", { name: "gb", className: "form-control", type: "number", min: "0", max: "1000000" })
+                    )
+                  ),
+                  React.createElement("hr", null),
+                  React.createElement(
+                    "div",
+                    { className: "row justify-content-center" },
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-4 text-center" },
+                      React.createElement(
+                        "label",
+                        { className: "form-input-label" },
+                        "Iron: "
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-8" },
+                      React.createElement("input", { name: "iron", className: "form-control", type: "number", min: "0", max: "1000000" })
+                    )
+                  ),
+                  React.createElement("hr", null),
+                  React.createElement(
+                    "div",
+                    { className: "row justify-content-center" },
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-4 text-center" },
+                      React.createElement(
+                        "label",
+                        { className: "form-input-label" },
+                        "Copper: "
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-8" },
+                      React.createElement("input", { name: "copper", className: "form-control", type: "number", min: "0", max: "1000000" })
+                    )
+                  ),
+                  React.createElement("hr", null),
+                  React.createElement(
+                    "div",
+                    { className: "row justify-content-center" },
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-4 text-center" },
+                      React.createElement(
+                        "label",
+                        { className: "form-input-label" },
+                        "Sapphires: "
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-8" },
+                      React.createElement("input", { name: "sapphire", className: "form-control", type: "number", min: "0", max: "1000000" })
+                    )
+                  ),
+                  React.createElement("hr", null),
+                  React.createElement(
+                    "div",
+                    { className: "row justify-content-center" },
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-4 text-center" },
+                      React.createElement(
+                        "label",
+                        { className: "form-input-label" },
+                        "Emeralds: "
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-8" },
+                      React.createElement("input", { name: "emerald", className: "form-control", type: "number", min: "0", max: "1000000" })
+                    )
+                  ),
+                  React.createElement("hr", null),
+                  React.createElement(
+                    "div",
+                    { className: "row justify-content-center" },
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-4 text-center" },
+                      React.createElement(
+                        "label",
+                        { className: "form-input-label" },
+                        "Rubies: "
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-8" },
+                      React.createElement("input", { name: "ruby", className: "form-control", type: "number", min: "0", max: "1000000" })
+                    )
+                  ),
+                  React.createElement("hr", null),
+                  React.createElement(
+                    "div",
+                    { className: "row justify-content-center" },
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-4 text-center" },
+                      React.createElement(
+                        "label",
+                        { className: "form-input-label" },
+                        "Diamonds: "
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "col-sm-8" },
+                      React.createElement("input", { name: "diamond", className: "form-control", type: "number", min: "0", max: "1000000" })
+                    )
+                  )
+                )
+              ),
+              React.createElement("div", { className: "col-xl-3" })
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "modal-footer" },
+          React.createElement(
+            "button",
+            { id: "payoutButton", "data-contract-id": "", className: "btn btn-lg btn-primary",
+              "data-dismiss": "modal", onClick: hideModal },
+            "Draft Sub Contract"
+          )
+        )
+      )
+    )
+  );
+};
+
 var ProgressPanel = function ProgressPanel(props) {
 
   var progressWidth = { width: props.current / props.total * 100 + "%" };
@@ -1447,20 +1717,45 @@ var renderAd = function renderAd(render) {
 };
 
 //Hide the ad modal
-var hideModal = function hideModal() {
-  var modal = document.querySelector("#adContainer div");
+var hideModal = function hideModal(e) {
+  var adModal = document.querySelector("#adContainer");
+  var subContractModal = document.querySelector("#subContractModalContainer");
+
+  if (!adModal && !subContractModal) {
+    return;
+  }
+
+  if (e) {
+    if (adModal.contains(e.target)) {
+
+      if (adAudio) {
+        adAudio.pause();
+        adAudio.currenTime = 0;
+      }
+
+      showingAd = false;
+      document.querySelector("#adContainer div").classList.add("hide-anim");
+    } else if (subContractModal.contains(e.target)) {
+      document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+    }
+  } else {
+    document.querySelector("#adContainer div").classList.add("hide-anim");
+    document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+  }
+};
+
+//Render the sub contract modal
+var renderSubContractModal = function renderSubContractModal() {
+  ReactDOM.render(React.createElement(SubContractModal, { contracts: availableContracts }), document.querySelector("#subContractModalContainer"));
+
+  var modal = document.querySelector("#subContractModalContainer div");
 
   if (!modal) {
     return;
   }
 
-  if (adAudio) {
-    adAudio.pause();
-    adAudio.currenTime = 0;
-  }
-
-  showingAd = false;
-  modal.classList.add("hide-anim");
+  modal.classList.remove("hide-anim");
+  modal.classList.add("show");
 };
 
 //Render the galaxy bucks purchase window
@@ -1479,10 +1774,11 @@ var populateContractsWindow = function populateContractsWindow(data) {
   ReactDOM.render(React.createElement(BasicContracts, { contracts: data.basicContracts }), document.querySelector("#basicContracts"));
 };
 
+// To Do: Make PartnerContracts react object
 var populatePartnerContractsWindow = function populatePartnerContractsWindow(data) {
   console.log(data);
   //    ReactDOM.render(
-  //    <PartnerContracts contracts={data.basicContracts} />,
+  //    <PartnerContracts contracts={data.openContracts} />,
   //    document.querySelector("#partnerContracts")
   //  );
 };
@@ -1494,10 +1790,12 @@ var populateMyContractsWindow = function populateMyContractsWindow(data) {
 };
 
 //Render the 'MyContracts' side panel
+var availableContracts = [];
 var renderMyContractsPanel = function renderMyContractsPanel() {
   ReactDOM.render(React.createElement(MyContractsWindow, null), document.querySelector("#leftPanel"));
 
   sendAjax('GET', '/getMyContracts', null, function (result) {
+    availableContracts = result.contracts;
     populateMyContractsWindow(result);
   });
 };
