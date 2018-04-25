@@ -413,6 +413,30 @@ const SubContracts = (props) => {
   );
 };
 
+const MarketWindow = (props) => {
+  return (
+    <div className="container">
+      <div className="jumbotron">
+        <h1 className="display-3">Sell Resources:</h1>
+        <p className="lead">In need of some Galaxy Bucks? Sell your hard-earned loot!</p>
+        <hr className="my-4" />
+      </div>
+    </div>
+  );
+};
+
+const UpgradesWindow = (props) => {
+  return (
+    <div className="container">
+      <div className="jumbotron">
+        <h1 className="display-3">Mining Upgrades:</h1>
+        <p className="lead">Purchase these to make mining easier!</p>
+        <hr className="my-4" />
+      </div>
+    </div>
+  );
+};
+
 const HighscoreWindow = (props) => {
   return (
     <div className="container">
@@ -910,6 +934,20 @@ const renderContracts = () => {
   sendAjax('GET', '/getSubContracts', null, (result) => {
     populateSubContractsWindow(result);
   });
+};
+
+const renderMarket = () => {
+  ReactDOM.render(
+    <MarketWindow />,
+    document.querySelector("#main")
+  );
+};
+
+const renderUpgrades = () => {
+  ReactDOM.render(
+    <UpgradesWindow />,
+    document.querySelector("#main")
+  );
 };
 
 const renderHighscores = () => {

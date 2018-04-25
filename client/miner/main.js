@@ -65,6 +65,14 @@ const loadView = () => {
       renderContracts();
       break;
     }
+    case "#market": {
+      renderMarket();
+      break;
+    }
+    case "#upgrades": {
+      renderUpgrades();
+      break;
+    }
     case "#highscores": {
       renderHighscores();
       break;

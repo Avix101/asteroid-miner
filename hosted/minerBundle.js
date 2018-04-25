@@ -652,6 +652,16 @@ var loadView = function loadView() {
         renderContracts();
         break;
       }
+    case "#market":
+      {
+        renderMarket();
+        break;
+      }
+    case "#upgrades":
+      {
+        renderUpgrades();
+        break;
+      }
     case "#highscores":
       {
         renderHighscores();
@@ -1393,6 +1403,50 @@ var SubContracts = function SubContracts(props) {
       "ul",
       { className: "list-group" },
       contracts
+    )
+  );
+};
+
+var MarketWindow = function MarketWindow(props) {
+  return React.createElement(
+    "div",
+    { className: "container" },
+    React.createElement(
+      "div",
+      { className: "jumbotron" },
+      React.createElement(
+        "h1",
+        { className: "display-3" },
+        "Sell Resources:"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "In need of some Galaxy Bucks? Sell your hard-earned loot!"
+      ),
+      React.createElement("hr", { className: "my-4" })
+    )
+  );
+};
+
+var UpgradesWindow = function UpgradesWindow(props) {
+  return React.createElement(
+    "div",
+    { className: "container" },
+    React.createElement(
+      "div",
+      { className: "jumbotron" },
+      React.createElement(
+        "h1",
+        { className: "display-3" },
+        "Mining Upgrades:"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Purchase these to make mining easier!"
+      ),
+      React.createElement("hr", { className: "my-4" })
     )
   );
 };
@@ -2164,6 +2218,14 @@ var renderContracts = function renderContracts() {
   sendAjax('GET', '/getSubContracts', null, function (result) {
     populateSubContractsWindow(result);
   });
+};
+
+var renderMarket = function renderMarket() {
+  ReactDOM.render(React.createElement(MarketWindow, null), document.querySelector("#main"));
+};
+
+var renderUpgrades = function renderUpgrades() {
+  ReactDOM.render(React.createElement(UpgradesWindow, null), document.querySelector("#main"));
 };
 
 var renderHighscores = function renderHighscores() {
