@@ -2,6 +2,7 @@
 const models = require('./../models');
 
 const { Account } = models;
+const { SubContract } = models;
 
 // Holds data pertaining to a partiuclar asteroid (including rewards)
 class Asteroid {
@@ -97,9 +98,36 @@ class Asteroid {
         const key = rewardKeys[i];
         account.bank[key] += this.rewards[key];
       }
-      account.markModified('bank');
-      account.save();
-      return this.contract.remove();
+
+      // Delete all uncompleted sub contracts
+      // Also check against owner of sub contract(for partner cases)
+      return SubContract.SubContractModel.findSubContractsOf(
+        this.contract._id,
+        (er2, subContracts) => {
+          if (er2 || !subContracts) {
+            return;
+          }
+
+          // Credit contract owner this sub contract funds that weren't utilized
+          for (let i = 0; i < subContracts.length; i++) {
+            const subContract = subContracts[i];
+
+            const keys = Object.keys(subContract.rewards);
+            for (let j = 0; j < keys.length; j++) {
+              const key2 = keys[j];
+              account.bank[key2] += subContract.rewards[key2];
+            }
+
+            // Destroy the subContract
+            subContract.remove();
+          }
+
+          // Save account
+          account.markModified('bank');
+          account.save();
+          this.contract.remove();
+        },
+      );
     });
   }
 

@@ -110,6 +110,7 @@ const init = () => {
   //socket.on('event', eventFunc);
   socket.on('spawnAsteroid', spawnAsteroid);
   socket.on('asteroidUpdate', updateAsteroid);
+  socket.on('successMessage', processSocketSuccess);
   socket.on('errorMessage', processSocketError);
   
   //Start the update loop

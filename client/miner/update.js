@@ -50,6 +50,11 @@ const processSocketError = (data) => {
   handleError(data.error);
 };
 
+//Process a success message sent via sockets
+const processSocketSuccess = (data) => {
+  handleSuccess(data.message);
+};
+
 //Process the next part of the ad
 const processNextAdEvent = () => {
   if(adTimeline.length <= 0){

@@ -701,6 +701,7 @@ var init = function init() {
   //socket.on('event', eventFunc);
   socket.on('spawnAsteroid', spawnAsteroid);
   socket.on('asteroidUpdate', updateAsteroid);
+  socket.on('successMessage', processSocketSuccess);
   socket.on('errorMessage', processSocketError);
 
   //Start the update loop
@@ -780,6 +781,18 @@ var ContractWindow = function ContractWindow(props) {
   );
 };
 
+//Helper function to start mining for a sub contract
+var startSubMine = function startSubMine(e) {
+  var subContractId = e.target.getAttribute("data-contract-id");
+
+  if (!subContractId) {
+    return;
+  }
+
+  window.location = "#miner";
+  socket.emit('mineSub', { subContractId: subContractId });
+};
+
 //Helper function to start mining
 var startMine = function startMine(e) {
   var contractId = e.target.getAttribute("data-contract-id");
@@ -855,6 +868,46 @@ var purchaseContract = function purchaseContract(e) {
   });
 };
 
+//Helper method to accept a sub contract
+var acceptSubContract = function acceptSubContract(e) {
+  var subContractId = e.target.getAttribute('data-accept');
+
+  if (!subContractId) {
+    return;
+  }
+
+  getTokenWithCallback(function (csrfToken) {
+    var data = "id=" + subContractId + "&_csrf=" + csrfToken;
+    sendAjax('POST', '/acceptSubContract', data, function (data) {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+};
+
+//Handle a request to create a sub contract
+var handleSubContractSubmit = function handleSubContractSubmit(e) {
+
+  if (e) {
+    e.preventDefault();
+  }
+
+  var clickNum = document.querySelector("#clickNum");
+
+  if (clickNum.value < 1) {
+    handleError("Number of clicks must be at least 1");
+    return false;
+  }
+
+  sendAjax('POST', $("#subContractForm").attr("action"), $("#subContractForm").serialize(), function (data) {
+    hideModal();
+    handleSuccess(data.message);
+    renderMyContractsPanel();
+  });
+
+  return false;
+};
+
 // Buy a contract as a partner one
 var purchaseAsPartnerContract = function purchaseAsPartnerContract(e) {
   var asteroidClass = e.target.getAttribute('data-purchase');
@@ -874,6 +927,71 @@ var purchaseAsPartnerContract = function purchaseAsPartnerContract(e) {
 
 //Builds a list of contracts that the user owns
 var MyContracts = function MyContracts(props) {
+
+  var subContracts = props.data.subContracts.map(function (contract, index) {
+    return React.createElement(
+      "li",
+      { className: "list-group-item d-flex" },
+      React.createElement(
+        "div",
+        { className: "card border-info mb-3 contractCard" },
+        React.createElement(
+          "div",
+          { className: "card-header justify-content-center" },
+          "Asteroid Class: ",
+          contract.asteroid.classname.toUpperCase(),
+          React.createElement(
+            "div",
+            { className: "vAlign pillContainer" },
+            React.createElement(
+              "span",
+              { className: "badge badge-info badge-pill" },
+              "#",
+              index + 1
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "card-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement(
+                "div",
+                { className: "col-sm-12 text-center" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Contract Progress: ",
+                  contract.progress,
+                  " / ",
+                  contract.clicks
+                ),
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Asteroid Progress: ",
+                  contract.asteroid.progress,
+                  " / ",
+                  contract.asteroid.toughness
+                ),
+                React.createElement(
+                  "button",
+                  { "data-contract-id": contract.subContractId, onClick: startSubMine,
+                    className: "btn btn-lg btn-info fullButton" },
+                  "Mine"
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+  });
 
   var contracts = props.data.contracts.map(function (contract, index) {
     return React.createElement(
@@ -935,6 +1053,7 @@ var MyContracts = function MyContracts(props) {
   return React.createElement(
     "ul",
     { className: "list-group" },
+    subContracts,
     contracts
   );
 };
@@ -1046,6 +1165,120 @@ var BasicContracts = function BasicContracts(props) {
                     "Purchase As Partner (",
                     contract.price,
                     " GB)"
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    ));
+  }
+
+  return React.createElement(
+    "div",
+    { id: "basicContractList" },
+    React.createElement(
+      "ul",
+      { className: "list-group" },
+      contracts
+    )
+  );
+};
+
+var SubContracts = function SubContracts(props) {
+
+  var contractKeys = Object.keys(props.contracts);
+  var contracts = [];
+  for (var i = 0; i < contractKeys.length; i++) {
+    var contract = props.contracts[contractKeys[i]];
+
+    var rewardKeys = Object.keys(contract.rewards);
+    var rewards = [];
+    for (var _i2 = 0; _i2 < rewardKeys.length; _i2++) {
+      var reward = contract.rewards[rewardKeys[_i2]];
+      rewards.push(React.createElement(
+        "li",
+        { className: "card-text" },
+        rewardKeys[_i2],
+        ": ",
+        contract.rewards[rewardKeys[_i2]]
+      ));
+    }
+
+    contracts.push(React.createElement(
+      "li",
+      { className: "list-group-item d-flex" },
+      React.createElement(
+        "div",
+        { className: "card border-info mb-3 contractCard" },
+        React.createElement(
+          "div",
+          { className: "card-header justify-content-center" },
+          contract.name,
+          React.createElement(
+            "div",
+            { className: "vAlign pillContainer" },
+            React.createElement(
+              "span",
+              { className: "badge badge-info badge-pill" },
+              "#",
+              i + 1
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "card-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement(
+                "div",
+                { className: "col-sm-4 text-center" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Contractor: ",
+                  contract.owner
+                ),
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Required: ",
+                  contract.clicks,
+                  " Clicks"
+                ),
+                React.createElement("img", { className: "imagePreview", src: "/assets/img/asteroids/" + contract.asteroidClass + "01.png", alt: "Asteroid Sample" })
+              ),
+              React.createElement(
+                "div",
+                { className: "col-sm-4" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Rewards:",
+                  React.createElement(
+                    "ul",
+                    null,
+                    rewards
+                  )
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "col-sm-4 text-center justify-content-center vAlign" },
+                React.createElement(
+                  "p",
+                  { className: "contractButtonContainer" },
+                  React.createElement(
+                    "button",
+                    { "data-accept": contract.subContractId, onClick: acceptSubContract,
+                      className: "btn btn-lg btn-info normalWhitespace" },
+                    "Accept Sub Contract"
                   )
                 )
               )
@@ -1456,7 +1689,9 @@ var SubContractModal = function SubContractModal(props) {
                 { className: "col-xl-6" },
                 React.createElement(
                   "form",
-                  { id: "subContractForm", className: "form" },
+                  { id: "subContractForm", className: "form", onSubmit: handleSubContractSubmit,
+                    action: "/createSubContract"
+                  },
                   React.createElement(
                     "label",
                     { htmlFor: "contract", className: "form-input-label" },
@@ -1472,7 +1707,7 @@ var SubContractModal = function SubContractModal(props) {
                     { htmlFor: "clicks", className: "form-input-label" },
                     "Clicks Requested"
                   ),
-                  React.createElement("input", { name: "clicks", className: "form-control", type: "number", min: "0", max: "1000000" }),
+                  React.createElement("input", { id: "clickNum", name: "clicks", className: "form-control", type: "number", min: "1", max: "1000000" }),
                   React.createElement(
                     "label",
                     { className: "form-input-label" },
@@ -1609,7 +1844,8 @@ var SubContractModal = function SubContractModal(props) {
                       { className: "col-sm-8" },
                       React.createElement("input", { name: "diamond", className: "form-control", type: "number", min: "0", max: "1000000" })
                     )
-                  )
+                  ),
+                  React.createElement("input", { className: "hidden", name: "_csrf", value: props.csrf })
                 )
               ),
               React.createElement("div", { className: "col-xl-3" })
@@ -1621,9 +1857,15 @@ var SubContractModal = function SubContractModal(props) {
           { className: "modal-footer" },
           React.createElement(
             "button",
-            { id: "payoutButton", "data-contract-id": "", className: "btn btn-lg btn-primary",
+            { id: "cancelButton", className: "btn btn-lg btn-danger",
               "data-dismiss": "modal", onClick: hideModal },
-            "Draft Sub Contract"
+            "Cancel"
+          ),
+          React.createElement(
+            "button",
+            { id: "subContractSubmit", className: "btn btn-lg btn-primary",
+              "data-dismiss": "modal", onClick: handleSubContractSubmit },
+            "Create Sub Contract"
           )
         )
       )
@@ -1739,23 +1981,30 @@ var hideModal = function hideModal(e) {
       document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
     }
   } else {
-    document.querySelector("#adContainer div").classList.add("hide-anim");
-    document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+    if (adModal.querySelector('div')) {
+      document.querySelector("#adContainer div").classList.add("hide-anim");
+    }
+
+    if (subContractModal.querySelector('div')) {
+      document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+    }
   }
 };
 
 //Render the sub contract modal
 var renderSubContractModal = function renderSubContractModal() {
-  ReactDOM.render(React.createElement(SubContractModal, { contracts: availableContracts }), document.querySelector("#subContractModalContainer"));
+  getTokenWithCallback(function (csrfToken) {
+    ReactDOM.render(React.createElement(SubContractModal, { contracts: availableContracts, csrf: csrfToken }), document.querySelector("#subContractModalContainer"));
 
-  var modal = document.querySelector("#subContractModalContainer div");
+    var modal = document.querySelector("#subContractModalContainer div");
 
-  if (!modal) {
-    return;
-  }
+    if (!modal) {
+      return;
+    }
 
-  modal.classList.remove("hide-anim");
-  modal.classList.add("show");
+    modal.classList.remove("hide-anim");
+    modal.classList.add("show");
+  });
 };
 
 //Render the galaxy bucks purchase window
@@ -1770,8 +2019,14 @@ var renderProgressPanel = function renderProgressPanel(current, total) {
 
 //Populate contract window with returned contracts
 var populateContractsWindow = function populateContractsWindow(data) {
-  console.log(data);
+  //console.log(data);
   ReactDOM.render(React.createElement(BasicContracts, { contracts: data.basicContracts }), document.querySelector("#basicContracts"));
+};
+
+//Populate contract window with returned sub contracts
+var populateSubContractsWindow = function populateSubContractsWindow(data) {
+  console.log(data);
+  ReactDOM.render(React.createElement(SubContracts, { contracts: data.subContracts }), document.querySelector("#subContracts"));
 };
 
 // To Do: Make PartnerContracts react object
@@ -1811,6 +2066,9 @@ var renderContracts = function renderContracts() {
   });
   sendAjax('GET', '/getPartnerContracts', null, function (result) {
     populatePartnerContractsWindow(result);
+  });
+  sendAjax('GET', '/getSubContracts', null, function (result) {
+    populateSubContractsWindow(result);
   });
 };
 
@@ -1882,6 +2140,11 @@ var updateAsteroid = function updateAsteroid(data) {
 //Process an error message sent via sockets
 var processSocketError = function processSocketError(data) {
   handleError(data.error);
+};
+
+//Process a success message sent via sockets
+var processSocketSuccess = function processSocketSuccess(data) {
+  handleSuccess(data.message);
 };
 
 //Process the next part of the ad
@@ -2076,9 +2339,10 @@ var handleError = function handleError(message, hide) {
 
   var msg = message;
 
-  var modal = document.querySelector("#adContainer div");
+  var adModal = document.querySelector("#adModal");
+  var subContractModal = document.querySelector("#subContractModal");
 
-  if (modal) {
+  if (adModal || subContractModal) {
     hideModal();
   }
 

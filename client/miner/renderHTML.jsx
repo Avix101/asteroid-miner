@@ -32,6 +32,18 @@ const ContractWindow = (props) => {
   );
 };
 
+//Helper function to start mining for a sub contract
+const startSubMine = (e) => {
+  const subContractId = e.target.getAttribute("data-contract-id");
+  
+  if(!subContractId){
+    return;
+  }
+  
+  window.location = "#miner";
+  socket.emit('mineSub', { subContractId });
+};
+
 //Helper function to start mining
 const startMine = (e) => {
   const contractId = e.target.getAttribute("data-contract-id");
@@ -85,6 +97,46 @@ const purchaseContract = (e) => {
   });
 };
 
+//Helper method to accept a sub contract
+const acceptSubContract = (e) => {
+  const subContractId = e.target.getAttribute('data-accept');
+  
+  if(!subContractId){
+    return;
+  }
+  
+  getTokenWithCallback((csrfToken) => {
+    const data = `id=${subContractId}&_csrf=${csrfToken}`;
+    sendAjax('POST', '/acceptSubContract', data, (data) => {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+};
+
+//Handle a request to create a sub contract
+const handleSubContractSubmit = (e) => {
+  
+  if(e){
+    e.preventDefault();
+  }
+  
+  const clickNum = document.querySelector("#clickNum");
+  
+  if(clickNum.value < 1){
+    handleError("Number of clicks must be at least 1");
+    return false;
+  }
+  
+  sendAjax('POST', $("#subContractForm").attr("action"), $("#subContractForm").serialize(), (data) => {
+    hideModal();
+    handleSuccess(data.message);
+    renderMyContractsPanel();
+  });
+  
+  return false;
+}
+
 // Buy a contract as a partner one
 const purchaseAsPartnerContract = (e) => {
   const asteroidClass = e.target.getAttribute('data-purchase');
@@ -104,6 +156,34 @@ const purchaseAsPartnerContract = (e) => {
 
 //Builds a list of contracts that the user owns
 const MyContracts = (props) => {
+  
+  const subContracts = props.data.subContracts.map((contract, index) => {
+    return (
+      <li className="list-group-item d-flex">
+        <div className="card border-info mb-3 contractCard">
+          <div className="card-header justify-content-center">
+            Asteroid Class: {contract.asteroid.classname.toUpperCase()}
+            
+            <div className="vAlign pillContainer">
+              <span className="badge badge-info badge-pill">#{index + 1}</span>
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-sm-12 text-center">
+                  <p className="card-text">Contract Progress: {contract.progress} / {contract.clicks}</p>
+                  <p className="card-text">Asteroid Progress: {contract.asteroid.progress} / {contract.asteroid.toughness}</p>
+                  <button data-contract-id={contract.subContractId} onClick={startSubMine}
+                    className="btn btn-lg btn-info fullButton">Mine</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  });
   
   const contracts = props.data.contracts.map((contract, index) => {
     return (
@@ -134,6 +214,7 @@ const MyContracts = (props) => {
   
   return (
     <ul className="list-group">
+      {subContracts}
       {contracts}
     </ul>
   );
@@ -187,6 +268,70 @@ const BasicContracts = (props) => {
                       className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price} GB)</button>
                     <button data-purchase={contract.asteroidClass} onClick={purchaseAsPartnerContract}
                       className="btn btn-lg btn-primary normalWhitespace">Purchase As Partner ({contract.price} GB)</button>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  }
+  
+  return (
+    <div id="basicContractList">
+      <ul className="list-group">
+        {contracts}
+      </ul>
+    </div>
+  );
+};
+
+const SubContracts = (props) => {
+  
+  const contractKeys = Object.keys(props.contracts);
+  const contracts = [];
+  for(let i = 0; i < contractKeys.length; i++){
+    const contract = props.contracts[contractKeys[i]];
+    
+    const rewardKeys = Object.keys(contract.rewards);
+    const rewards = [];
+    for(let i = 0; i < rewardKeys.length; i++){
+      const reward = contract.rewards[rewardKeys[i]];
+      rewards.push(
+        <li className="card-text">{rewardKeys[i]}: {contract.rewards[rewardKeys[i]]}</li>
+      );
+    }
+    
+    contracts.push(
+      <li className="list-group-item d-flex">
+        <div className="card border-info mb-3 contractCard">
+          <div className="card-header justify-content-center">
+            {contract.name}
+            
+            <div className="vAlign pillContainer">
+              <span className="badge badge-info badge-pill">#{i + 1}</span>
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-sm-4 text-center">
+                  <p className="card-text">Contractor: {contract.owner}</p>
+                  <p className="card-text">Required: {contract.clicks} Clicks</p>
+                  <img className="imagePreview" src={`/assets/img/asteroids/${contract.asteroidClass}01.png`} alt="Asteroid Sample" />
+                </div>
+                <div className="col-sm-4">
+                  <p className="card-text">Rewards:
+                    <ul>
+                      {rewards}
+                    </ul>
+                  </p>
+                </div>
+                <div className="col-sm-4 text-center justify-content-center vAlign">
+                  <p className="contractButtonContainer">
+                    <button data-accept={contract.subContractId} onClick={acceptSubContract}
+                      className="btn btn-lg btn-info normalWhitespace">Accept Sub Contract</button>
                   </p>
                 </div>
               </div>
@@ -381,8 +526,6 @@ const SubContractModal = (props) => {
     );
   });
   
-  
-  
   return (
     <div id="subContractModal" className="modal show" tabindex="-1" role="dialog">
       <div id="pageMask"></div>
@@ -401,13 +544,15 @@ const SubContractModal = (props) => {
               <div className="row">
                 <div className="col-xl-3"></div>
                 <div className="col-xl-6">
-                  <form id="subContractForm" className="form">
+                  <form id="subContractForm" className="form" onSubmit={handleSubContractSubmit}
+                    action="/createSubContract"
+                  >
                     <label htmlFor="contract" className="form-input-label">Contract</label>
                     <select name="contract" className="custom-select">
                       {contractOptions}
                     </select>
                     <label htmlFor="clicks" className="form-input-label">Clicks Requested</label>
-                    <input name="clicks" className="form-control" type="number" min="0" max="1000000" />
+                    <input id="clickNum" name="clicks" className="form-control" type="number" min="1" max="1000000" />
                     <label className="form-input-label">Resources Given</label>
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
@@ -471,6 +616,7 @@ const SubContractModal = (props) => {
                         <input name="diamond" className="form-control" type="number" min="0" max="1000000" />
                       </div>
                     </div>
+                    <input className="hidden" name="_csrf" value={props.csrf} />
                   </form>
                 </div>
                 <div className="col-xl-3"></div>
@@ -478,8 +624,10 @@ const SubContractModal = (props) => {
             </div>
           </div>
           <div className="modal-footer">
-            <button id="payoutButton" data-contract-id="" className="btn btn-lg btn-primary"
-              data-dismiss="modal" onClick={hideModal}>Draft Sub Contract</button>
+            <button id="cancelButton" className="btn btn-lg btn-danger"
+              data-dismiss="modal" onClick={hideModal}>Cancel</button>
+            <button id="subContractSubmit" className="btn btn-lg btn-primary"
+              data-dismiss="modal" onClick={handleSubContractSubmit}>Create Sub Contract</button>
           </div>
         </div>
       </div>
@@ -586,26 +734,34 @@ const hideModal = (e) => {
       document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
     }
   } else {
-    document.querySelector("#adContainer div").classList.add("hide-anim");
-    document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+    if(adModal.querySelector('div')){
+      document.querySelector("#adContainer div").classList.add("hide-anim");
+    }
+    
+    if(subContractModal.querySelector('div')){
+      document.querySelector("#subContractModalContainer div").classList.add("hide-anim");
+    }
   }
 };
 
 //Render the sub contract modal
 const renderSubContractModal = () => {
-  ReactDOM.render(
-    <SubContractModal contracts={availableContracts} />,
-    document.querySelector("#subContractModalContainer")
-  );
+  getTokenWithCallback((csrfToken) => {
+    ReactDOM.render(
+      <SubContractModal contracts={availableContracts} csrf={csrfToken} />,
+      document.querySelector("#subContractModalContainer")
+    );
+    
+    const modal = document.querySelector("#subContractModalContainer div");
+    
+    if(!modal){
+      return;
+    }
+    
+    modal.classList.remove("hide-anim");
+    modal.classList.add("show");
+  });
   
-  const modal = document.querySelector("#subContractModalContainer div");
-  
-  if(!modal){
-    return;
-  }
-  
-  modal.classList.remove("hide-anim");
-  modal.classList.add("show");
 };
 
 //Render the galaxy bucks purchase window
@@ -626,12 +782,21 @@ const renderProgressPanel = (current, total) => {
 
 //Populate contract window with returned contracts
 const populateContractsWindow = (data) => {
-  console.log(data);
+  //console.log(data);
   ReactDOM.render(
     <BasicContracts contracts={data.basicContracts} />,
     document.querySelector("#basicContracts")
   );
 };
+
+//Populate contract window with returned sub contracts
+const populateSubContractsWindow = (data) => {
+  console.log(data);
+  ReactDOM.render(
+    <SubContracts contracts={data.subContracts} />,
+    document.querySelector("#subContracts")
+  );
+}
 
 // To Do: Make PartnerContracts react object
 const populatePartnerContractsWindow = (data) => {
@@ -677,9 +842,12 @@ const renderContracts = () => {
   sendAjax('GET', '/getContracts', null, (result) => {
 		populateContractsWindow(result);
 	});
-    sendAjax('GET', '/getPartnerContracts', null, (result) => {
+  sendAjax('GET', '/getPartnerContracts', null, (result) => {
 		populatePartnerContractsWindow(result);
 	});
+  sendAjax('GET', '/getSubContracts', null, (result) => {
+    populateSubContractsWindow(result);
+  });
 };
 
 const renderHighscores = () => {

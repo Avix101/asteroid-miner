@@ -70,9 +70,10 @@ const handleError = (message, hide) => {
   
   let msg = message;
   
-  const modal = document.querySelector("#adContainer div");
+  const adModal = document.querySelector("#adModal");
+  const subContractModal = document.querySelector("#subContractModal");
   
-  if(modal){
+  if(adModal || subContractModal){
     hideModal();
   }
   

@@ -8,6 +8,8 @@ const miner = require('./miner');
 const models = require('./models');
 
 const { Contract } = models;
+const { SubContract } = models;
+const { Account } = models;
 
 let io;
 
@@ -25,6 +27,45 @@ const verifyDataIntegrity = (data, expectedKeys) => {
     verified = data[key] !== undefined;
   }
   return verified;
+};
+
+// Move a player into a game room (create / join)
+const joinGame = (sock, id) => {
+  // Make a new game room or add the user to an existing one
+  const socket = sock;
+  if (!miner.game.hasGame(id)) {
+    Contract.ContractModel.findById(id, (err, contract) => {
+      if (err || !contract) {
+        socket.emit('errorMessage', { error: 'Could not find contract' });
+        return;
+      }
+
+      // Ensure that this client owns the requested contract
+      if (socket.handshake.session.account._id.toString() !== contract.ownerId.toString()) {
+        socket.emit('errorMessage', { error: 'You do not own that contract' });
+        return;
+      }
+
+      // Have the socket join the new gameroom
+      socket.leave(socket.roomJoined);
+      socket.join(id);
+      socket.roomJoined = id;
+
+      miner.game.createGame(id);
+      miner.game.generateAsteroid(id, contract, (asteroid) => {
+        io.sockets.in(id).emit('spawnAsteroid', { asteroid });
+      });
+    });
+  } else {
+    const asteroid = miner.game.getAsteroid(id);
+
+    // Have the socket join the new gameroom
+    socket.leave(socket.roomJoined);
+    socket.join(id);
+    socket.roomJoined = id;
+
+    socket.emit('spawnAsteroid', { asteroid });
+  }
 };
 
 const init = (ioInstance) => {
@@ -63,40 +104,82 @@ const init = (ioInstance) => {
       }
 
       const id = data.contractId;
+      joinGame(socket, id);
+    });
 
-      // Make a new game room or add the user to an existing one
-      if (!miner.game.hasGame(id)) {
-        Contract.ContractModel.findById(id, (err, contract) => {
-          if (err || !contract) {
-            socket.emit('errorMessage', { error: 'Could not find contract' });
-            return;
-          }
-
-          // Have the socket join the new gameroom
-          socket.leave(socket.roomJoined);
-          socket.join(id);
-          socket.roomJoined = id;
-
-          miner.game.createGame(id);
-          miner.game.generateAsteroid(id, contract, (asteroid) => {
-            io.sockets.in(id).emit('spawnAsteroid', { asteroid });
-          });
-        });
-      } else {
-        const asteroid = miner.game.getAsteroid(id);
-
-        // Have the socket join the new gameroom
-        socket.leave(socket.roomJoined);
-        socket.join(id);
-        socket.roomJoined = id;
-
-        socket.emit('spawnAsteroid', { asteroid });
+    socket.on('mineSub', (data) => {
+      if (!verifyDataIntegrity(data, ['subContractId'])) {
+        return;
       }
+
+      const subId = data.subContractId;
+      SubContract.SubContractModel.findById(subId, (err, subContract) => {
+        if (err || !subContract) {
+          socket.emit('errorMessage', { error: 'Could not find sub contract' });
+          return;
+        }
+
+        if (subContract.subContractorId.toString()
+          !== socket.handshake.session.account._id
+        ) {
+          socket.emit('errorMessage', { error: 'You do not own that sub contract' });
+          return;
+        }
+
+        socket.sub = subContract;
+        joinGame(socket, subContract.contractId);
+      });
     });
 
     // Process clicks sent to the server
     socket.on('click', (data) => {
       miner.game.addClick(socket.roomJoined, data.mouse);
+
+      // Also fulfill sub contract stuff
+      if (socket.sub) {
+        // Maybe switch to miner.game.handleSubClick(...etc)
+
+        if (socket.sub.progress >= socket.sub.clicks) {
+          return;
+        }
+
+        socket.sub.progress += 1;
+
+        // If the sub contract is complete
+        if (socket.sub.progress >= socket.sub.clicks) {
+          socket.sub.progress = socket.sub.clicks;
+
+          // Find the sub contractor's account
+          Account.AccountModel.findById(socket.sub.subContractorId, (err, acc) => {
+            if (err || !acc) {
+              socket.emit('errorMessage', { error: 'Sub contract completion not saved' });
+              return;
+            }
+
+            const account = acc;
+            account.bank.gb += socket.sub.rewards.gb;
+            account.bank.iron += socket.sub.rewards.iron;
+            account.bank.copper += socket.sub.rewards.copper;
+            account.bank.sapphire += socket.sub.rewards.sapphire;
+            account.bank.emerald += socket.sub.rewards.emerald;
+            account.bank.ruby += socket.sub.rewards.ruby;
+            account.bank.diamond += socket.sub.rewards.diamond;
+
+            account.markModified('bank');
+            const savePromise = account.save();
+
+            savePromise.then(() => {
+              socket.emit('successMessage', {
+                message: 'Sub contract completed! Rewards have been credited to your account',
+              });
+              socket.sub.remove();
+              socket.sub = null;
+            });
+          });
+        } else {
+          socket.sub.save();
+        }
+      }
     });
   });
 };
