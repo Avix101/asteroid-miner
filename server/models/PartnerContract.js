@@ -60,10 +60,11 @@ PartnerContractSchema.statics.addPartner = (userId, contractId, callback) => {
   };
 
   PartnerContractModel.find(search, (err, docs) => {
-    if (docs[0]._docs.partners.length < docs[0]._doc.maximumPartners) {
-      return PartnerContractModel.update({ $push: { childrens: userId } }, callback);
+    console.dir(docs[0]._doc.partners);
+    if (docs[0]._doc.partners.length < docs[0]._doc.maximumPartners) {
+      return PartnerContractModel.update({ $push: { partners: userId } }, callback);
     }
-    return callback(err);
+    return callback(err, {});
   });
 };
 

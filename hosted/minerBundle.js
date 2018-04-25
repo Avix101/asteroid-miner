@@ -868,6 +868,22 @@ var purchaseContract = function purchaseContract(e) {
   });
 };
 
+var joinContractAsPartner = function joinContractAsPartner(e) {
+  var contractId = e.target.getAttribute('data-contractId');
+
+  if (!contractId) {
+    return;
+  }
+
+  getTokenWithCallback(function (csrfToken) {
+    var data = "id=" + contractId + "&_csrf=" + csrfToken;
+    sendAjax('POST', '/joinContractAsPartner', data, function (data) {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+};
+
 //Helper method to accept a sub contract
 var acceptSubContract = function acceptSubContract(e) {
   var subContractId = e.target.getAttribute('data-accept');
@@ -1165,6 +1181,87 @@ var BasicContracts = function BasicContracts(props) {
                     "Purchase As Partner (",
                     contract.price,
                     " GB)"
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    ));
+  }
+
+  return React.createElement(
+    "div",
+    { id: "basicContractList" },
+    React.createElement(
+      "ul",
+      { className: "list-group" },
+      contracts
+    )
+  );
+};
+
+var PartnerContracts = function PartnerContracts(props) {
+  console.log(props);
+  var openContracts = props.contracts;
+  var contracts = [];
+
+  console.log('openContracts length: ' + openContracts.length);
+  for (var i = 0; i < openContracts.length; i++) {
+    var contract = openContracts[i];
+
+    contracts.push(React.createElement(
+      "li",
+      { className: "list-group-item d-flex" },
+      React.createElement(
+        "div",
+        { className: "card border-primary mb-3 contractCard" },
+        React.createElement(
+          "div",
+          { className: "card-header justify-content-center" },
+          contract.asteroid.name
+        ),
+        React.createElement(
+          "div",
+          { className: "card-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement(
+                "div",
+                { className: "col-sm-4 text-center" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Slots: ",
+                  contract.partners.length,
+                  " / ",
+                  contract.maximumPartners
+                ),
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Toughness: ",
+                  contract.asteroid.toughness,
+                  " Clicks"
+                ),
+                React.createElement("img", { className: "imagePreview", src: "" + contract.asteroid.imageFile, alt: "Asteroid Sample" })
+              ),
+              React.createElement(
+                "div",
+                { className: "col-sm-4 text-center justify-content-center vAlign" },
+                React.createElement(
+                  "p",
+                  { className: "contractButtonContainer" },
+                  React.createElement(
+                    "button",
+                    { "data-contractID": contract._id, onClick: joinContractAsPartner,
+                      className: "btn btn-lg btn-primary normalWhitespace" },
+                    "Join as Partner (? GB)"
                   )
                 )
               )
@@ -2031,11 +2128,8 @@ var populateSubContractsWindow = function populateSubContractsWindow(data) {
 
 // To Do: Make PartnerContracts react object
 var populatePartnerContractsWindow = function populatePartnerContractsWindow(data) {
-  console.log(data);
-  //    ReactDOM.render(
-  //    <PartnerContracts contracts={data.openContracts} />,
-  //    document.querySelector("#partnerContracts")
-  //  );
+  console.log(data.openContracts);
+  ReactDOM.render(React.createElement(PartnerContracts, { contracts: data.openContracts }), document.querySelector("#partnerContracts"));
 };
 
 //Populate already owned contracts with data sent from server

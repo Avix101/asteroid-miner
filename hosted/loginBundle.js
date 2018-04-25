@@ -297,9 +297,10 @@ var handleError = function handleError(message, hide) {
 
   var msg = message;
 
-  var modal = document.querySelector("#adContainer div");
+  var adModal = document.querySelector("#adModal");
+  var subContractModal = document.querySelector("#subContractModal");
 
-  if (modal) {
+  if (adModal || subContractModal) {
     hideModal();
   }
 

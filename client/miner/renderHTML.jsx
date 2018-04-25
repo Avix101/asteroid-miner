@@ -97,6 +97,22 @@ const purchaseContract = (e) => {
   });
 };
 
+const joinContractAsPartner = (e) => {
+    const contractId = e.target.getAttribute('data-contractId');
+    
+    if(!contractId){
+        return;
+    }
+    
+  getTokenWithCallback((csrfToken) => {
+    const data = `id=${contractId}&_csrf=${csrfToken}`;
+    sendAjax('POST', '/joinContractAsPartner', data, (data) => {
+      handleSuccess(data.message);
+      renderContracts();
+    });
+  });
+}
+
 //Helper method to accept a sub contract
 const acceptSubContract = (e) => {
   const subContractId = e.target.getAttribute('data-accept');
@@ -268,6 +284,52 @@ const BasicContracts = (props) => {
                       className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price} GB)</button>
                     <button data-purchase={contract.asteroidClass} onClick={purchaseAsPartnerContract}
                       className="btn btn-lg btn-primary normalWhitespace">Purchase As Partner ({contract.price} GB)</button>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  }
+  
+  return (
+    <div id="basicContractList">
+      <ul className="list-group">
+        {contracts}
+      </ul>
+    </div>
+  );
+};
+
+const PartnerContracts = (props) => {
+    console.log(props);
+  const openContracts = props.contracts;    
+  const contracts = [];
+    
+    console.log('openContracts length: ' + openContracts.length);
+  for(let i = 0; i < openContracts.length; i++){
+    const contract = openContracts[i];
+
+    contracts.push(
+      <li className="list-group-item d-flex">
+        <div className="card border-primary mb-3 contractCard">
+          <div className="card-header justify-content-center">
+            {contract.asteroid.name}
+          </div>
+          <div className="card-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-sm-4 text-center">
+                  <p className="card-text">Slots: {contract.partners.length} / {contract.maximumPartners}</p>
+                  <p className="card-text">Toughness: {contract.asteroid.toughness} Clicks</p>
+                  <img className="imagePreview" src={`${contract.asteroid.imageFile}`} alt="Asteroid Sample" />
+                </div>
+                <div className="col-sm-4 text-center justify-content-center vAlign">
+                  <p className="contractButtonContainer">
+                    <button data-contractID={contract._id} onClick={joinContractAsPartner}
+                      className="btn btn-lg btn-primary normalWhitespace">Join as Partner (? GB)</button>
                   </p>
                 </div>
               </div>
@@ -800,11 +862,11 @@ const populateSubContractsWindow = (data) => {
 
 // To Do: Make PartnerContracts react object
 const populatePartnerContractsWindow = (data) => {
-    console.log(data);
-//    ReactDOM.render(
-//    <PartnerContracts contracts={data.openContracts} />,
-//    document.querySelector("#partnerContracts")
-//  );
+    console.log(data.openContracts);
+    ReactDOM.render(
+    <PartnerContracts contracts={data.openContracts} />,
+    document.querySelector("#partnerContracts")
+  );
 }
 
 //Populate already owned contracts with data sent from server

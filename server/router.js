@@ -31,6 +31,7 @@ const attach = (app) => {
   app.post('/getGalaxyBucks', mid.requiresLogin, controllers.Account.getGalaxyBucks);
   app.post('/buyAsteroid', mid.requiresLogin, controllers.Miner.buyAsteroid);
   app.post('/buyPartnerAsteroid', mid.requiresLogin, controllers.Miner.buyPartnerAsteroid);
+  app.post('/joinContractAsPartner', mid.requiresLogin, controllers.Miner.joinContractAsPartner);    
   app.post('/createSubContract', mid.requiresLogin, controllers.Miner.createSubContract);
   app.post('/acceptSubContract', mid.requiresLogin, controllers.Miner.acceptSubContract);
   app.get('/getContracts', mid.requiresLogin, controllers.Miner.getContracts);

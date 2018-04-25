@@ -227,6 +227,32 @@ const buyAsteroid = (request, response) => {
   });
 };
 
+const joinContractAsPartner = (request, response) => {
+  const req = request;
+  const res = response;
+
+  req.body.id = `${req.body.id}`;
+
+  return Account.AccountModel.findById(req.session.account._id, (err, acc) => {
+    if (err || !acc) {
+      return res.status(400).json({ error: 'Could not find your account' });
+    }
+
+    const account = acc;
+
+    req.session.account = Account.AccountModel.toAPI(account);
+
+    return PartnerContract.PartnerContractModel
+      .addPartner(req.session.account._id, req.body.id, (error, obj) => {
+        if (error) {
+          return res.status(400).json({ error: 'Failed to Join' });
+        }
+        console.log(obj);
+        return res.status(201).json({ message: 'Contract successfully joined' });
+      });
+  });
+};
+
 // Purchase a contract as a partner one
 
 const buyPartnerAsteroid = (request, response) => {
@@ -399,6 +425,7 @@ module.exports = {
   getContracts,
   getSubContracts,
   getPartnerContracts,
+  joinContractAsPartner,
   getMyContracts,
   buyAsteroid,
   acceptSubContract,
