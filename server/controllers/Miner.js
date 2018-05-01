@@ -139,33 +139,59 @@ const getPartnerContracts = (req, res) => {
 // Get contracts belonging to a user
 const getMyContracts = (req, res) =>
   Contract.ContractModel.findContractsFor(req.session.account._id, (err, results) => {
-    if (err || !results) {
+    let contracts = null;
+    let subContracts = null;
+    let partnerContracts = null;
+    if (err) {
       return res.status(500).json({ error: 'Could not retrieve contracts' });
     }
 
-    const contracts = results.map(contract => ({
-      contractId: contract._id,
-      asteroid: Asteroid.getBundledDataFor(contract.asteroid),
-      partners: contract.partners.length,
-      subContractors: contract.subContractors.length,
-    }));
-
+    if (results) {
+      contracts = results.map(contract => ({
+        contractId: contract._id,
+        asteroid: Asteroid.getBundledDataFor(contract.asteroid),
+        partners: contract.partners.length,
+        subContractors: contract.subContractors.length,
+      }));
+    }
     return SubContract.SubContractModel.findSubContractsFor(
       req.session.account._id,
       (er2, res2) => {
-        if (er2 || !res2) {
-          return res.status(200).json({ contracts });
+        if (er2) {
+          // return res.status(200).json({ contracts });
+          return res.status(500).json({ error: 'Could not retrieve contracts' });
         }
 
-        const subContracts = res2.map(subContract => ({
-          subContractId: subContract._id,
-          progress: subContract.progress,
-          clicks: subContract.clicks,
-          asteroid: Asteroid.getBundledDataFor(subContract.asteroid),
-          rewards: subContract.rewards,
-        }));
+        if (res2) {
+          subContracts = res2.map(subContract => ({
+            subContractId: subContract._id,
+            progress: subContract.progress,
+            clicks: subContract.clicks,
+            asteroid: Asteroid.getBundledDataFor(subContract.asteroid),
+            rewards: subContract.rewards,
+          }));
+        }
 
-        return res.status(200).json({ contracts, subContracts });
+        return PartnerContract.PartnerContractModel.findReadyPartnerContractsFor(
+          req.session.account._id,
+          (er3, res3) => {
+            if (er3) {
+              return res.status(500).json({ error: 'Could not retrieve contracts' });
+            }
+
+            if (res3) {
+              console.dir(res3);
+              partnerContracts = res3.map(partnerContract => ({
+                partnerContractId: partnerContract._id,
+                owner: partnerContract.ownerId,
+                partners: partnerContract.partners,
+                asteroid: Asteroid.getBundledDataFor(partnerContract.asteroid),
+              }));
+            }
+            console.dir(partnerContracts);
+            return res.status(200).json({ contracts, subContracts, partnerContracts });
+          },
+        );
       },
     );
   });
@@ -275,7 +301,7 @@ const buyPartnerAsteroid = (request, response) => {
     }
 
     const account = acc;
-    account.bank.gb -= basicContracts[req.body.ac].price;
+    account.bank.gb -= (basicContracts[req.body.ac].price / 4);
     req.session.account.bank.gb = account.bank.gb;
     account.markModified('bank');
     const accountSave = account.save();
@@ -288,7 +314,8 @@ const buyPartnerAsteroid = (request, response) => {
 
       const contractData = {
         ownerId: req.session.account._id,
-        maximumPartners: 2, // replace 2 with number of maximum partners per contract
+        price: basicContracts[req.body.ac].price / 4, // Maximum Partner Amount + 1
+        maximumPartners: 3, // replace 3 with number of maximum partners per contract
         partners: [],
         asteroid: newAsteroid,
       };

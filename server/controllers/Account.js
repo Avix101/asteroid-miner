@@ -2,6 +2,10 @@ const models = require('../models');
 
 const { Account } = models;
 
+const sgMail = require('@sendgrid/mail');
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY); /* process.env.SENDGRID_API_KEY */
+
 // Render the login page and send a csrf token
 const loginPage = (req, res) => {
   res.render('login', { csrfToken: req.csrfToken() });
@@ -45,10 +49,11 @@ const signup = (request, response) => {
 
   // Cast params to strings for the sake of security
   req.body.username = `${req.body.username}`;
+  req.body.email = `${req.body.email}`;
   req.body.pass = `${req.body.pass}`;
   req.body.pass2 = `${req.body.pass2}`;
 
-  if (!req.body.username || !req.body.pass || !req.body.pass2) {
+  if (!req.body.username || !req.body.email || !req.body.pass || !req.body.pass2) {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
@@ -59,6 +64,7 @@ const signup = (request, response) => {
   return Account.AccountModel.generateHash(req.body.pass, (salt, hash) => {
     const accountData = {
       username: req.body.username,
+      email: req.body.email,
       salt,
       bank: {
         gb: 0, iron: 0, copper: 0, sapphire: 0, emerald: 0, ruby: 0, diamond: 0,
@@ -74,6 +80,15 @@ const signup = (request, response) => {
 
     // Save to the database, process a response or handle an error
     savePromise.then(() => {
+      // send a sendgrid welcome email
+      const msg = {
+        to: req.body.email,
+        from: 'noreply@asteroidminers.com',
+        subject: 'Welcome to Asteroid Miners',
+        text: 'Good Luck out there',
+        html: '<strong>you will need it</strong>',
+      };
+      sgMail.send(msg);
       req.session.account = Account.AccountModel.toAPI(newAccount);
       res.json({ redirect: '/miner' });
     });

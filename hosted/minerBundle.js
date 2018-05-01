@@ -953,7 +953,7 @@ var purchaseAsPartnerContract = function purchaseAsPartnerContract(e) {
 
 //Builds a list of contracts that the user owns
 var MyContracts = function MyContracts(props) {
-
+  console.dir(props.data);
   var subContracts = props.data.subContracts.map(function (contract, index) {
     return React.createElement(
       "li",
@@ -1075,12 +1075,69 @@ var MyContracts = function MyContracts(props) {
       )
     );
   });
+  var partnerContracts = props.data.partnerContracts.map(function (contract, index) {
+    return React.createElement(
+      "li",
+      { className: "list-group-item d-flex" },
+      React.createElement(
+        "div",
+        { className: "card border-primary mb-3 contractCard" },
+        React.createElement(
+          "div",
+          { className: "card-header justify-content-center" },
+          "Asteroid Class: ",
+          contract.asteroid.classname.toUpperCase(),
+          React.createElement(
+            "div",
+            { className: "vAlign pillContainer" },
+            React.createElement(
+              "span",
+              { className: "badge badge-primary badge-pill" },
+              "#",
+              index + 1
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "card-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement(
+                "div",
+                { className: "col-sm-12 text-center" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Progress: ",
+                  contract.asteroid.progress,
+                  " / ",
+                  contract.asteroid.toughness
+                ),
+                React.createElement(
+                  "button",
+                  { "data-contract-id": contract.partnerContractId, onClick: startMine,
+                    className: "btn btn-lg btn-primary fullButton" },
+                  "Mine"
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+  });
 
   return React.createElement(
     "ul",
     { className: "list-group" },
     subContracts,
-    contracts
+    contracts,
+    partnerContracts
   );
 };
 
@@ -1189,7 +1246,7 @@ var BasicContracts = function BasicContracts(props) {
                     { "data-purchase": contract.asteroidClass, onClick: purchaseAsPartnerContract,
                       className: "btn btn-lg btn-primary normalWhitespace" },
                     "Purchase As Partner (",
-                    contract.price,
+                    contract.price / 4,
                     " GB)"
                   )
                 )
@@ -1271,7 +1328,9 @@ var PartnerContracts = function PartnerContracts(props) {
                     "button",
                     { "data-contractID": contract._id, onClick: joinContractAsPartner,
                       className: "btn btn-lg btn-primary normalWhitespace" },
-                    "Join as Partner (? GB)"
+                    "Join as Partner (",
+                    contract.price,
+                    " GB)"
                   )
                 )
               )

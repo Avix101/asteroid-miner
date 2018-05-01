@@ -172,7 +172,7 @@ const purchaseAsPartnerContract = (e) => {
 
 //Builds a list of contracts that the user owns
 const MyContracts = (props) => {
-  
+  console.dir(props.data);
   const subContracts = props.data.subContracts.map((contract, index) => {
     return (
       <li className="list-group-item d-flex">
@@ -227,11 +227,38 @@ const MyContracts = (props) => {
       </li>
     );
   });
+    const partnerContracts = props.data.partnerContracts.map((contract, index) => {
+    return (
+      <li className="list-group-item d-flex">
+        <div className="card border-primary mb-3 contractCard">
+          <div className="card-header justify-content-center">
+            Asteroid Class: {contract.asteroid.classname.toUpperCase()}
+            
+            <div className="vAlign pillContainer">
+              <span className="badge badge-primary badge-pill">#{index + 1}</span>
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-sm-12 text-center">
+                  <p className="card-text">Progress: {contract.asteroid.progress} / {contract.asteroid.toughness}</p>
+                  <button data-contract-id={contract.partnerContractId} onClick={startMine}
+                    className="btn btn-lg btn-primary fullButton">Mine</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  });
   
   return (
     <ul className="list-group">
       {subContracts}
       {contracts}
+      {partnerContracts}
     </ul>
   );
 };
@@ -283,7 +310,7 @@ const BasicContracts = (props) => {
                     <button data-purchase={contract.asteroidClass} onClick={purchaseContract}
                       className="btn btn-lg btn-primary normalWhitespace">Purchase Asteroid ({contract.price} GB)</button>
                     <button data-purchase={contract.asteroidClass} onClick={purchaseAsPartnerContract}
-                      className="btn btn-lg btn-primary normalWhitespace">Purchase As Partner ({contract.price} GB)</button>
+                      className="btn btn-lg btn-primary normalWhitespace">Purchase As Partner ({contract.price/4} GB)</button>
                   </p>
                 </div>
               </div>
@@ -329,7 +356,7 @@ const PartnerContracts = (props) => {
                 <div className="col-sm-4 text-center justify-content-center vAlign">
                   <p className="contractButtonContainer">
                     <button data-contractID={contract._id} onClick={joinContractAsPartner}
-                      className="btn btn-lg btn-primary normalWhitespace">Join as Partner (? GB)</button>
+                      className="btn btn-lg btn-primary normalWhitespace">Join as Partner ({contract.price} GB)</button>
                   </p>
                 </div>
               </div>

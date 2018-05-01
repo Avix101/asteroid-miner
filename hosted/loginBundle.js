@@ -85,7 +85,7 @@ var createLoginWindow = function createLoginWindow(csrf) {
 var handleSignup = function handleSignup(e) {
 	e.preventDefault();
 
-	if ($("#user").val() == '' || $("#pass").val() == '' || $("#pass2").val() == '') {
+	if ($("#user").val() == '' || $("#email").val() == '' || $("#pass").val() == '' || $("#pass2").val() == '') {
 		handleError("All fields are required");
 		return false;
 	}
@@ -131,6 +131,20 @@ var SignupWindow = function SignupWindow(props) {
 					"div",
 					{ className: "col-sm-9" },
 					React.createElement("input", { id: "user", className: "form-control", type: "text", name: "username", placeholder: "username" })
+				)
+			),
+			React.createElement(
+				"div",
+				{ className: "form-group row" },
+				React.createElement(
+					"label",
+					{ htmlFor: "email", className: "col-sm-3 col-form-label" },
+					"Email: "
+				),
+				React.createElement(
+					"div",
+					{ className: "col-sm-9" },
+					React.createElement("input", { id: "user", className: "form-control", type: "text", name: "email", placeholder: "email" })
 				)
 			),
 			React.createElement(

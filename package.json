@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/Avix101/asteroid-miner#readme",
   "dependencies": {
+    "@sendgrid/mail": "^6.2.1",
     "body-parser": "^1.18.2",
     "compression": "^1.7.2",
     "connect-redis": "^3.3.3",

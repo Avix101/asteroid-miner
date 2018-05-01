@@ -60,7 +60,7 @@ const createLoginWindow = (csrf) => {
 const handleSignup = (e) => {
 	e.preventDefault();
 	
-	if($("#user").val() == '' || $("#pass").val() == '' || $("#pass2").val() == ''){
+	if($("#user").val() == '' || $("#email").val() == '' || $("#pass").val() == '' || $("#pass2").val() == ''){
 		handleError("All fields are required");
 		return false;
 	}
@@ -91,6 +91,12 @@ const SignupWindow = (props) => {
           <label htmlFor="username" className="col-sm-3 col-form-label">Username: </label>
           <div className="col-sm-9">
             <input id="user" className="form-control" type="text" name="username" placeholder="username" />
+          </div>
+        </div>
+        <div className="form-group row">
+          <label htmlFor="email" className="col-sm-3 col-form-label">Email: </label>
+          <div className="col-sm-9">
+            <input id="user" className="form-control" type="text" name="email" placeholder="email" />
           </div>
         </div>
         <div className="form-group row">

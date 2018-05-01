@@ -10,6 +10,9 @@ const PartnerContractSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
+  cost: {
+    type: Number,
+  },
   maximumPartners: {
     type: Number,
     required: true,
@@ -31,8 +34,33 @@ const PartnerContractSchema = new mongoose.Schema({
 // A static function that finds all contracts belonging to a user
 PartnerContractSchema.statics.findContractsFor = (id, callback) => {
   const search = {
-    ownerId: id,
-    partners: id,
+
+    $or: [
+      { ownerId: id },
+      { partners: id },
+    ],
+    //    partners: id,
+    // ownerId: id,
+
+  };
+
+  return PartnerContractModel.find(search, callback);
+};
+
+// Finds  partner contracts the user participates in and isn't the direct owner of.
+PartnerContractSchema.statics.findReadyPartnerContractsFor = (id, callback) => {
+  const search = {
+    $and: [
+      {
+        $or: [
+          { ownerId: id },
+          { partners: id },
+        ],
+      },
+      {
+        partners: { $size: 3 },
+      },
+    ],
   };
 
   return PartnerContractModel.find(search, callback);
