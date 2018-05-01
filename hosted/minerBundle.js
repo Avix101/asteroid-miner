@@ -607,7 +607,17 @@ var diamondIcon = void 0;
 //Variables to manage socket
 var socket = void 0,
     hash = void 0;
-var account = {};
+var account = {
+  bank: {
+    gb: 0,
+    iron: 0,
+    copper: 0,
+    sapphire: 0,
+    emerald: 0,
+    ruby: 0,
+    diamond: 0
+  }
+};
 
 //Variables to handle update calls
 var animationFrame = void 0;
@@ -2007,15 +2017,15 @@ var UpgradesWindow = function UpgradesWindow(props) {
 //Construct a window to allow the player to view the game's highscores
 var HighscoreWindow = function HighscoreWindow(props) {
 
-  console.log(props.scores);
-
   var scores = props.scores.map(function (score, index) {
 
+    //Change the color if the listed user is this user
     var color = "primary";
     if (score.username === username) {
       color = "info";
     }
 
+    //Build a list item for each individual score
     return React.createElement(
       "li",
       { className: "list-group-item d-flex border border-" + color },
@@ -2059,28 +2069,28 @@ var HighscoreWindow = function HighscoreWindow(props) {
                   "li",
                   { className: "flex-center" },
                   React.createElement("img", { width: "25", height: "25", src: gbIcon.src, alt: "" }),
-                  "GB: ",
+                  " GB: ",
                   score.bank.gb
                 ),
                 React.createElement(
                   "li",
                   { className: "flex-center" },
                   React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
-                  "Iron: ",
+                  " Iron: ",
                   score.bank.iron
                 ),
                 React.createElement(
                   "li",
                   { className: "flex-center" },
                   React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
-                  "Copper: ",
+                  " Copper: ",
                   score.bank.copper
                 ),
                 React.createElement(
                   "li",
                   { className: "flex-center" },
                   React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
-                  "Sapphires: ",
+                  " Sapphires: ",
                   score.bank.sapphire
                 )
               ),
@@ -2091,21 +2101,21 @@ var HighscoreWindow = function HighscoreWindow(props) {
                   "li",
                   { className: "flex-center" },
                   React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
-                  "Emeralds: ",
+                  " Emeralds: ",
                   score.bank.emerald
                 ),
                 React.createElement(
                   "li",
                   { className: "flex-center" },
                   React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
-                  "Rubies: ",
+                  " Rubies: ",
                   score.bank.ruby
                 ),
                 React.createElement(
                   "li",
                   { className: "flex-center" },
                   React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
-                  "Diamonds: ",
+                  " Diamonds: ",
                   score.bank.diamond
                 )
               )
@@ -2175,6 +2185,7 @@ var HighscoreWindow = function HighscoreWindow(props) {
     }
   }
 
+  //Bundle all of the lists together and display them
   return React.createElement(
     "div",
     { className: "container" },
@@ -2244,6 +2255,33 @@ var changeScoreSet = function changeScoreSet(e) {
   document.querySelector("#scoreSet" + dataSet).classList.remove("hidden");
 };
 
+//Handle a request to change a password
+var handlePasswordChange = function handlePasswordChange(e) {
+  e.preventDefault();
+
+  //Password fields cannot be empty
+  if ($("#newPassword").val() == '' || $("#newPassword2").val() == '' || $("#password").val() == '') {
+    handleError("All fields are required to change password.");
+    return false;
+  }
+
+  //New password and password confirmation should match
+  if ($("#newPassword").val() !== $("#newPassword2").val()) {
+    handleError("New password and password confirmation must match");
+    return false;
+  }
+
+  //Send the data to the server via Ajax
+  sendAjax('POST', $("#passwordChangeForm").attr("action"), $("#passwordChangeForm").serialize(), function () {
+    handleSuccess("Password successfully changed!");
+    $("#newPassword").val("");
+    $("#newPassword2").val("");
+    $("#password").val("");
+  });
+
+  return false;
+};
+
 //Construct a window to allow the player to view their profile
 var ProfileWindow = function ProfileWindow(props) {
   return React.createElement(
@@ -2260,9 +2298,139 @@ var ProfileWindow = function ProfileWindow(props) {
       React.createElement(
         "p",
         { className: "lead" },
-        "Miner ID: (#) Logs & Account data (SYSTEM INFO)"
+        "Miner ID: ",
+        username
       ),
-      React.createElement("hr", { className: "my-4" })
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "h2",
+        null,
+        "Bank Details"
+      ),
+      React.createElement(
+        "ul",
+        null,
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: gbIcon.src, alt: "" }),
+          " GB: ",
+          account.bank.gb
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+          " Iron: ",
+          account.bank.iron
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+          " Copper: ",
+          account.bank.copper
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+          " Sapphires: ",
+          account.bank.sapphire
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+          " Emeralds: ",
+          account.bank.emerald
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+          " Rubies: ",
+          account.bank.ruby
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+          " Diamonds: ",
+          account.bank.diamond
+        )
+      ),
+      React.createElement("hr", null),
+      React.createElement(
+        "form",
+        {
+          id: "passwordChangeForm", name: "passwordChangeForm",
+          action: "/updatePassword",
+          onSubmit: handlePasswordChange,
+          method: "POST"
+        },
+        React.createElement(
+          "fieldset",
+          null,
+          React.createElement(
+            "div",
+            { className: "form-group text-centered row" },
+            React.createElement(
+              "label",
+              { htmlFor: "newPassword", className: "col-sm-3 col-form-label" },
+              "New Password:"
+            ),
+            React.createElement(
+              "div",
+              { className: "col-sm-3" },
+              React.createElement("input", { id: "newPassword", name: "newPassword", type: "password", className: "form-control", placeholder: "New Password" })
+            ),
+            React.createElement("div", { className: "col-sm-6" })
+          ),
+          React.createElement(
+            "div",
+            { className: "form-group text-centered row" },
+            React.createElement(
+              "label",
+              { htmlFor: "newPassword2", className: "col-sm-3 col-form-label" },
+              "Confirm New Password:"
+            ),
+            React.createElement(
+              "div",
+              { className: "col-sm-3" },
+              React.createElement("input", { id: "newPassword2", name: "newPassword2", type: "password", className: "form-control", placeholder: "Confirm" })
+            ),
+            React.createElement("div", { className: "col-sm-6" })
+          ),
+          React.createElement(
+            "div",
+            { className: "form-group text-centered row" },
+            React.createElement(
+              "label",
+              { htmlFor: "password", className: "col-sm-3 col-form-label" },
+              "Current Password:"
+            ),
+            React.createElement(
+              "div",
+              { className: "col-sm-3" },
+              React.createElement("input", { id: "password", name: "password", type: "password", className: "form-control", placeholder: "Current Password" })
+            ),
+            React.createElement("div", { className: "col-sm-6" })
+          ),
+          React.createElement("input", { type: "hidden", name: "_csrf", value: props.csrf }),
+          React.createElement(
+            "div",
+            { className: "form-group text-centered row" },
+            React.createElement(
+              "div",
+              { className: "col-sm-5" },
+              React.createElement("input", { type: "submit", id: "passwordChangeSubmit", value: "Change Password", className: "btn btn-lg btn-warning formSubmit" })
+            ),
+            React.createElement("div", { className: "col-sm-3" }),
+            React.createElement("div", { className: "col-sm-4" })
+          )
+        )
+      )
     )
   );
 };
@@ -3032,7 +3200,9 @@ var renderHighscores = function renderHighscores() {
 
 //Render the player's profile
 var renderProfile = function renderProfile() {
-  ReactDOM.render(React.createElement(ProfileWindow, null), document.querySelector("#main"));
+  getTokenWithCallback(function (csrfToken) {
+    ReactDOM.render(React.createElement(ProfileWindow, { csrf: csrfToken }), document.querySelector("#main"));
+  });
 };
 
 //Request a newe csrf token and then execute a callback when one is retrieved

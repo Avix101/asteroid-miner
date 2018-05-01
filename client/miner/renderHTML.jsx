@@ -286,7 +286,7 @@ const BasicContracts = (props) => {
     
     const rewardKeys = Object.keys(contract.rewardChances);
     const rewards = [];
-    for(let i =0; i < rewardKeys.length; i++){
+    for(let i = 0; i < rewardKeys.length; i++){
       const reward = contract.rewardChances[rewardKeys[i]];
       rewards.push(
         <li className="card-text">{rewardKeys[i]}: {reward.min}-{reward.max}</li>
@@ -698,15 +698,15 @@ const UpgradesWindow = (props) => {
 //Construct a window to allow the player to view the game's highscores
 const HighscoreWindow = (props) => {
   
-  console.log(props.scores);
-  
   const scores = props.scores.map((score, index) => {
     
+    //Change the color if the listed user is this user
     let color = "primary";
     if(score.username === username){
       color = "info";
     }
     
+    //Build a list item for each individual score
     return (
       <li className={`list-group-item d-flex border border-${color}`}>
         <div className="container">
@@ -719,15 +719,15 @@ const HighscoreWindow = (props) => {
               <p className="lead text-center">Resources</p>
               <div className="flex-center">
                 <ul>
-                  <li className="flex-center"><img width="25" height="25" src={gbIcon.src} alt="" />GB: {score.bank.gb}</li>
-                  <li className="flex-center"><img width="25" height="25" src={ironIcon.src} alt="" />Iron: {score.bank.iron}</li>
-                  <li className="flex-center"><img width="25" height="25" src={copperIcon.src} alt="" />Copper: {score.bank.copper}</li>
-                  <li className="flex-center"><img width="25" height="25" src={sapphireIcon.src} alt="" />Sapphires: {score.bank.sapphire}</li>
+                  <li className="flex-center"><img width="25" height="25" src={gbIcon.src} alt="" /> GB: {score.bank.gb}</li>
+                  <li className="flex-center"><img width="25" height="25" src={ironIcon.src} alt="" /> Iron: {score.bank.iron}</li>
+                  <li className="flex-center"><img width="25" height="25" src={copperIcon.src} alt="" /> Copper: {score.bank.copper}</li>
+                  <li className="flex-center"><img width="25" height="25" src={sapphireIcon.src} alt="" /> Sapphires: {score.bank.sapphire}</li>
                 </ul>
                 <ul>
-                  <li className="flex-center"><img width="25" height="25" src={emeraldIcon.src} alt="" />Emeralds: {score.bank.emerald}</li>
-                  <li className="flex-center"><img width="25" height="25" src={rubyIcon.src} alt="" />Rubies: {score.bank.ruby}</li>
-                  <li className="flex-center"><img width="25" height="25" src={diamondIcon.src} alt="" />Diamonds: {score.bank.diamond}</li>
+                  <li className="flex-center"><img width="25" height="25" src={emeraldIcon.src} alt="" /> Emeralds: {score.bank.emerald}</li>
+                  <li className="flex-center"><img width="25" height="25" src={rubyIcon.src} alt="" /> Rubies: {score.bank.ruby}</li>
+                  <li className="flex-center"><img width="25" height="25" src={diamondIcon.src} alt="" /> Diamonds: {score.bank.diamond}</li>
                 </ul>
               </div>
             </div>
@@ -781,6 +781,7 @@ const HighscoreWindow = (props) => {
     }
   }
   
+  //Bundle all of the lists together and display them
   return (
     <div className="container">
       <div className="jumbotron">
@@ -822,14 +823,90 @@ const changeScoreSet = (e) => {
   document.querySelector(`#scoreSet${dataSet}`).classList.remove("hidden");
 };
 
+//Handle a request to change a password
+const handlePasswordChange = (e) => {
+	e.preventDefault();
+	
+  //Password fields cannot be empty
+	if($("#newPassword").val() == '' || $("#newPassword2").val() == '' || $("#password").val() == ''){
+		handleError("All fields are required to change password.");
+		return false;
+	}
+  
+  //New password and password confirmation should match
+  if($("#newPassword").val() !==  $("#newPassword2").val()){
+    handleError("New password and password confirmation must match");
+    return false;
+  }
+
+  //Send the data to the server via Ajax
+  sendAjax('POST', $("#passwordChangeForm").attr("action"), $("#passwordChangeForm").serialize(), () => {
+    handleSuccess("Password successfully changed!");
+    $("#newPassword").val("");
+    $("#newPassword2").val("");
+    $("#password").val("");
+  });
+	
+	return false;
+};
+
 //Construct a window to allow the player to view their profile
 const ProfileWindow = (props) => {
   return (
     <div className="container">
       <div className="jumbotron">
         <h1 className="display-3">Personal Profile:</h1>
-        <p className="lead">Miner ID: (#) Logs & Account data (SYSTEM INFO)</p>
+        <p className="lead">Miner ID: {username}</p>
         <hr className="my-4" />
+        <h2>Bank Details</h2>
+        <ul>
+          <li><img width="25" height="25" src={gbIcon.src} alt="" /> GB: {account.bank.gb}</li>
+          <li><img width="25" height="25" src={ironIcon.src} alt="" /> Iron: {account.bank.iron}</li>
+          <li><img width="25" height="25" src={copperIcon.src} alt="" /> Copper: {account.bank.copper}</li>
+          <li><img width="25" height="25" src={sapphireIcon.src} alt="" /> Sapphires: {account.bank.sapphire}</li>
+          <li><img width="25" height="25" src={emeraldIcon.src} alt="" /> Emeralds: {account.bank.emerald}</li>
+          <li><img width="25" height="25" src={rubyIcon.src} alt="" /> Rubies: {account.bank.ruby}</li>
+          <li><img width="25" height="25" src={diamondIcon.src} alt="" /> Diamonds: {account.bank.diamond}</li>
+        </ul>
+        <hr />
+        <form
+        id="passwordChangeForm" name="passwordChangeForm"
+        action="/updatePassword"
+        onSubmit={handlePasswordChange}
+        method="POST"
+        >
+          <fieldset>
+            <div className="form-group text-centered row">
+              <label htmlFor="newPassword" className="col-sm-3 col-form-label">New Password:</label>
+              <div className="col-sm-3">
+                <input id="newPassword" name="newPassword" type="password" className="form-control" placeholder="New Password" />
+              </div>
+              <div className="col-sm-6"></div>
+            </div>
+            <div className="form-group text-centered row">
+              <label htmlFor="newPassword2" className="col-sm-3 col-form-label">Confirm New Password:</label>
+              <div className="col-sm-3">
+                <input id="newPassword2" name="newPassword2" type="password" className="form-control" placeholder="Confirm" />
+              </div>
+              <div className="col-sm-6"></div>
+            </div>
+            <div className="form-group text-centered row">
+              <label htmlFor="password" className="col-sm-3 col-form-label">Current Password:</label>
+              <div className="col-sm-3">
+                <input id="password" name="password" type="password" className="form-control" placeholder="Current Password" />
+              </div>
+              <div className="col-sm-6"></div>
+            </div>
+            <input type="hidden" name="_csrf" value={props.csrf} />
+            <div className="form-group text-centered row">
+              <div className="col-sm-5">
+                <input type="submit" id="passwordChangeSubmit" value="Change Password" className="btn btn-lg btn-warning formSubmit" />
+              </div>
+              <div className="col-sm-3"></div>
+              <div className="col-sm-4"></div>
+            </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   );
@@ -1362,10 +1439,12 @@ const renderHighscores = () => {
 
 //Render the player's profile
 const renderProfile = () => {
-  ReactDOM.render(
-    <ProfileWindow />,
-    document.querySelector("#main")
-  );
+  getTokenWithCallback((csrfToken) => {
+    ReactDOM.render(
+      <ProfileWindow csrf={csrfToken} />,
+      document.querySelector("#main")
+    );
+  });
 };
 
 //Request a newe csrf token and then execute a callback when one is retrieved

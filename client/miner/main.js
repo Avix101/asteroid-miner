@@ -22,7 +22,17 @@ let diamondIcon;
 
 //Variables to manage socket
 let socket, hash;
-let account = {};
+let account = {
+  bank: {
+    gb: 0,
+    iron: 0,
+    copper: 0,
+    sapphire: 0,
+    emerald: 0,
+    ruby: 0,
+    diamond: 0,
+  }
+};
 
 //Variables to handle update calls
 let animationFrame;
