@@ -5,6 +5,6 @@ const rates = {
   emerald: 583,
   ruby: 4045,
   diamond: 10620,
-}
+};
 
 module.exports = rates;

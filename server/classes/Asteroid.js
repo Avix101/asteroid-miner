@@ -126,7 +126,7 @@ class Asteroid {
           account.markModified('bank');
           account.save();
           this.contract.remove();
-        }
+        },
       );
     });
   }

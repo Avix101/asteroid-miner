@@ -68,7 +68,7 @@ const joinGame = (sock, id) => {
   }
 };
 
-//Setup sockets and attach custom events
+// Setup sockets and attach custom events
 const init = (ioInstance) => {
   io = ioInstance;
 
@@ -183,21 +183,21 @@ const init = (ioInstance) => {
         }
       }
     });
-    
-    //Process a request for an update regarding an account's bank
+
+    // Process a request for an update regarding an account's bank
     socket.on('getMyBankData', () => {
-      //Grab the updated account data
+      // Grab the updated account data
       Account.AccountModel.findById(socket.handshake.session.account._id, (err, acc) => {
-        if(err || !acc){
+        if (err || !acc) {
           socket.emit('errorMessage', { error: 'Could not retrieve bank data' });
           return;
         }
-        
+
         const account = acc;
-        
-        //Store the new data
+
+        // Store the new data
         socket.handshake.session.account = Account.AccountModel.toAPI(account);
-        
+
         socket.emit('accountUpdate', {
           bank: socket.handshake.session.account.bank,
         });

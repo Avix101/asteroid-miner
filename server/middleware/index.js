@@ -1,6 +1,3 @@
-const models = require('./../models');
-const { Account } = models;
-
 // Requires a request to be authenticated
 const requiresLogin = (req, res, next) => {
   if (!req.session.account) {
