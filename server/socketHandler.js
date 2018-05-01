@@ -68,6 +68,7 @@ const joinGame = (sock, id) => {
   }
 };
 
+//Setup sockets and attach custom events
 const init = (ioInstance) => {
   io = ioInstance;
 
@@ -107,6 +108,7 @@ const init = (ioInstance) => {
       joinGame(socket, id);
     });
 
+    // Process a request to start mining as part of a subcontract
     socket.on('mineSub', (data) => {
       if (!verifyDataIntegrity(data, ['subContractId'])) {
         return;
@@ -180,6 +182,26 @@ const init = (ioInstance) => {
           socket.sub.save();
         }
       }
+    });
+    
+    //Process a request for an update regarding an account's bank
+    socket.on('getMyBankData', () => {
+      //Grab the updated account data
+      Account.AccountModel.findById(socket.handshake.session.account._id, (err, acc) => {
+        if(err || !acc){
+          socket.emit('errorMessage', { error: 'Could not retrieve bank data' });
+          return;
+        }
+        
+        const account = acc;
+        
+        //Store the new data
+        socket.handshake.session.account = Account.AccountModel.toAPI(account);
+        
+        socket.emit('accountUpdate', {
+          bank: socket.handshake.session.account.bank,
+        });
+      });
     });
   });
 };

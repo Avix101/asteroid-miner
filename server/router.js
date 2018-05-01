@@ -34,6 +34,8 @@ const attach = (app) => {
   app.post('/joinContractAsPartner', mid.requiresLogin, controllers.Miner.joinContractAsPartner);
   app.post('/createSubContract', mid.requiresLogin, controllers.Miner.createSubContract);
   app.post('/acceptSubContract', mid.requiresLogin, controllers.Miner.acceptSubContract);
+  app.post('/sellResources', mid.requiresLogin, controllers.Miner.sellResources);
+  app.get('/getRCCTR', mid.requiresLogin, controllers.Miner.getRCCTR);
   app.get('/getContracts', mid.requiresLogin, controllers.Miner.getContracts);
   app.get('/getSubContracts', mid.requiresLogin, controllers.Miner.getSubContracts);
   app.get('/getPartnerContracts', mid.requiresLogin, controllers.Miner.getPartnerContracts);

@@ -596,10 +596,18 @@ var adAudio = void 0;
 
 //Static image files
 var galaxyBg = void 0;
+var gbIcon = void 0;
+var ironIcon = void 0;
+var copperIcon = void 0;
+var sapphireIcon = void 0;
+var emeraldIcon = void 0;
+var rubyIcon = void 0;
+var diamondIcon = void 0;
 
 //Variables to manage socket
 var socket = void 0,
     hash = void 0;
+var account = {};
 
 //Variables to handle update calls
 var animationFrame = void 0;
@@ -691,12 +699,19 @@ var loadView = function loadView() {
 //Run this function when the page loads
 var init = function init() {
 
-  //Load the requested view
-  loadView();
-
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
   galaxyBg = document.querySelector("#galaxyBg");
+  gbIcon = document.querySelector("#gbIcon");
+  ironIcon = document.querySelector("#ironIcon");
+  copperIcon = document.querySelector("#copperIcon");
+  sapphireIcon = document.querySelector("#sapphireIcon");
+  emeraldIcon = document.querySelector("#emeraldIcon");
+  rubyIcon = document.querySelector("#rubyIcon");
+  diamondIcon = document.querySelector("#diamondIcon");
+
+  //Load the requested view
+  loadView();
 
   //Construct prep canvas (for building frames)
   prepCanvas = document.createElement('canvas');
@@ -711,8 +726,12 @@ var init = function init() {
   //socket.on('event', eventFunc);
   socket.on('spawnAsteroid', spawnAsteroid);
   socket.on('asteroidUpdate', updateAsteroid);
+  socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);
   socket.on('errorMessage', processSocketError);
+
+  //Load the player's bank data
+  socket.emit('getMyBankData');
 
   //Start the update loop
   animationFrame = requestAnimationFrame(update);
@@ -929,6 +948,19 @@ var handleSubContractSubmit = function handleSubContractSubmit(e) {
     hideModal();
     handleSuccess(data.message);
     renderMyContractsPanel();
+  });
+
+  return false;
+};
+
+//Handle a request to sell resources for Galaxy Bucks
+var handleMarketSubmit = function handleMarketSubmit(e) {
+  e.preventDefault();
+
+  sendAjax('POST', $("#marketForm").attr("action"), $("#marketForm").serialize(), function (data) {
+    handleSuccess(data.message);
+    socket.emit('getMyBankData');
+    loadView();
   });
 
   return false;
@@ -1466,7 +1498,60 @@ var SubContracts = function SubContracts(props) {
   );
 };
 
+//Helper function that returns a compact version of the requested number
+var compressNumber = function compressNumber(num) {
+  if (num > 1000000000000) {
+    num = Math.floor(num / 1000000000000) + "T";
+  } else if (num > 1000000000) {
+    num = Math.floor(num / 1000000000) + "B";
+  } else if (num > 1000000) {
+    num = Math.floor(num / 1000000) + "M";
+  }
+
+  if (Number.isNaN(num)) {
+    num = 0;
+  }
+
+  return num;
+};
+
+//Construct a window for selling resources back to the server for Galaxy Bucks
 var MarketWindow = function MarketWindow(props) {
+
+  //If the user's bank has not loaded, wait for it to do so
+  if (!account.bank) {
+    return React.createElement(
+      "div",
+      { className: "container" },
+      React.createElement(
+        "div",
+        { className: "jumbotron" },
+        React.createElement(
+          "p",
+          { className: "lead" },
+          "Loading account data... ",
+          React.createElement("span", { className: "fas fa-sync fa-spin" })
+        )
+      )
+    );
+  }
+
+  //Grab current input values to calculate potential pay
+  var currentInputs = document.querySelectorAll("#marketForm input[type=number]");
+  var currentValues = {};
+  for (var i = 0; i < currentInputs.length; i++) {
+    var input = currentInputs[i];
+    currentValues[input.name] = parseInt(input.value, 10);
+
+    //Make sure the entered value is a number
+    if (Number.isNaN(currentValues[input.name])) {
+      currentValues[input.name] = 0;
+    }
+  }
+
+  //Calculate the total pay
+  var totalPay = compressNumber(props.rates.iron * currentValues.iron + props.rates.copper * currentValues.copper + props.rates.sapphire * currentValues.sapphire + props.rates.emerald * currentValues.emerald + props.rates.ruby * currentValues.ruby + props.rates.diamond * currentValues.diamond);
+
   return React.createElement(
     "div",
     { className: "container" },
@@ -1483,11 +1568,420 @@ var MarketWindow = function MarketWindow(props) {
         { className: "lead" },
         "In need of some Galaxy Bucks? Sell your hard-earned loot!"
       ),
-      React.createElement("hr", { className: "my-4" })
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "form",
+        { id: "marketForm", className: "form", onSubmit: handleMarketSubmit,
+          action: "/sellResources"
+        },
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center" },
+            React.createElement(
+              "p",
+              { className: "lead" },
+              "Resources"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center" },
+            React.createElement(
+              "p",
+              { className: "lead" },
+              "Amount to Sell"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center" },
+            React.createElement(
+              "p",
+              { className: "lead" },
+              "Price Per (RCCTR*)"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center" },
+            React.createElement(
+              "p",
+              { className: "lead" },
+              "Payment"
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center border border-primary" },
+            React.createElement(
+              "label",
+              { className: "form-input-label" },
+              React.createElement("img", { src: ironIcon.src, width: "25", height: "25", alt: "" }),
+              " Iron: (",
+              account.bank.iron,
+              ")"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4 flex-center" },
+            React.createElement("input", { name: "iron", className: "form-control", type: "number", min: "0", max: account.bank.iron })
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-info flex-center" },
+              React.createElement(
+                "span",
+                null,
+                props.rates.iron,
+                "x"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-success flex-center" },
+              React.createElement(
+                "span",
+                null,
+                compressNumber(props.rates.iron * currentValues.iron),
+                " GB"
+              )
+            )
+          )
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center border border-primary" },
+            React.createElement(
+              "label",
+              { className: "form-input-label" },
+              React.createElement("img", { src: copperIcon.src, width: "25", height: "25", alt: "" }),
+              " Copper: (",
+              account.bank.copper,
+              ")"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4" },
+            React.createElement("input", { name: "copper", className: "form-control", type: "number", min: "0", max: account.bank.copper })
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-info flex-center" },
+              React.createElement(
+                "span",
+                null,
+                props.rates.copper,
+                "x"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-success flex-center" },
+              React.createElement(
+                "span",
+                null,
+                compressNumber(props.rates.copper * currentValues.copper),
+                " GB"
+              )
+            )
+          )
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center border border-primary" },
+            React.createElement(
+              "label",
+              { className: "form-input-label" },
+              React.createElement("img", { src: sapphireIcon.src, width: "25", height: "25", alt: "" }),
+              " Sapphires: (",
+              account.bank.sapphire,
+              ")"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4" },
+            React.createElement("input", { name: "sapphire", className: "form-control", type: "number", min: "0", max: account.bank.sapphire })
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-info flex-center" },
+              React.createElement(
+                "span",
+                null,
+                props.rates.sapphire,
+                "x"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-success flex-center" },
+              React.createElement(
+                "span",
+                null,
+                compressNumber(props.rates.sapphire * currentValues.sapphire),
+                " GB"
+              )
+            )
+          )
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center border border-primary" },
+            React.createElement(
+              "label",
+              { className: "form-input-label" },
+              React.createElement("img", { src: emeraldIcon.src, width: "25", height: "25", alt: "" }),
+              " Emeralds: (",
+              account.bank.emerald,
+              ")"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4" },
+            React.createElement("input", { name: "emerald", className: "form-control", type: "number", min: "0", max: account.bank.emerald })
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-info flex-center" },
+              React.createElement(
+                "span",
+                null,
+                props.rates.emerald,
+                "x"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-success flex-center" },
+              React.createElement(
+                "span",
+                null,
+                compressNumber(props.rates.emerald * currentValues.emerald),
+                " GB"
+              )
+            )
+          )
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center border border-primary" },
+            React.createElement(
+              "label",
+              { className: "form-input-label" },
+              React.createElement("img", { src: rubyIcon.src, width: "25", height: "25", alt: "" }),
+              " Rubies: (",
+              account.bank.ruby,
+              ")"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4" },
+            React.createElement("input", { name: "ruby", className: "form-control", type: "number", min: "0", max: account.bank.ruby })
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-info flex-center" },
+              React.createElement(
+                "span",
+                null,
+                props.rates.ruby,
+                "x"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-success flex-center" },
+              React.createElement(
+                "span",
+                null,
+                compressNumber(props.rates.ruby * currentValues.ruby),
+                " GB"
+              )
+            )
+          )
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center border border-primary" },
+            React.createElement(
+              "label",
+              { className: "form-input-label" },
+              React.createElement("img", { src: diamondIcon.src, width: "25", height: "25", alt: "" }),
+              " Diamonds: (",
+              account.bank.diamond,
+              ")"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4" },
+            React.createElement("input", { name: "diamond", className: "form-control", type: "number", min: "0", max: account.bank.diamond })
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-info flex-center" },
+              React.createElement(
+                "span",
+                null,
+                props.rates.diamond,
+                "x"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-success flex-center" },
+              React.createElement(
+                "span",
+                null,
+                compressNumber(props.rates.diamond * currentValues.diamond),
+                " GB"
+              )
+            )
+          )
+        ),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center" },
+            React.createElement(
+              "p",
+              null,
+              "->"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center" },
+            React.createElement(
+              "p",
+              null,
+              "->"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "p",
+              null,
+              "->"
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-sm-2 text-center flex-center" },
+            React.createElement(
+              "div",
+              { className: "full-size border border-success flex-center" },
+              React.createElement(
+                "span",
+                null,
+                compressNumber(totalPay),
+                " GB"
+              )
+            )
+          )
+        ),
+        React.createElement("input", { className: "hidden", name: "_csrf", value: props.csrf }),
+        React.createElement("hr", null),
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement("div", { className: "col-sm-8 text-center flex-center" }),
+          React.createElement(
+            "div",
+            { className: "col-sm-4 text-center flex-center" },
+            React.createElement("input", { type: "submit", className: "btn btn-lg btn-success", value: "Sell Resources" })
+          )
+        )
+      ),
+      React.createElement(
+        "p",
+        { className: "lead font-italic" },
+        "*RCCTR: Robo Corp\xAE Current Trade Rate"
+      )
     )
   );
 };
 
+//Construct a window to allow the player to purchase upgrades
 var UpgradesWindow = function UpgradesWindow(props) {
   return React.createElement(
     "div",
@@ -1510,6 +2004,7 @@ var UpgradesWindow = function UpgradesWindow(props) {
   );
 };
 
+//Construct a window to allow the player to view the game's highscores
 var HighscoreWindow = function HighscoreWindow(props) {
   return React.createElement(
     "div",
@@ -1532,6 +2027,7 @@ var HighscoreWindow = function HighscoreWindow(props) {
   );
 };
 
+//Construct a window to allow the player to view their profile
 var ProfileWindow = function ProfileWindow(props) {
   return React.createElement(
     "div",
@@ -1932,7 +2428,8 @@ var SubContractModal = function SubContractModal(props) {
                       React.createElement(
                         "label",
                         { className: "form-input-label" },
-                        "Galaxy Bucks: "
+                        React.createElement("img", { src: gbIcon.src, width: "25", height: "25", alt: "" }),
+                        " Galaxy Bucks: "
                       )
                     ),
                     React.createElement(
@@ -1951,7 +2448,8 @@ var SubContractModal = function SubContractModal(props) {
                       React.createElement(
                         "label",
                         { className: "form-input-label" },
-                        "Iron: "
+                        React.createElement("img", { src: ironIcon.src, width: "25", height: "25", alt: "" }),
+                        " Iron: "
                       )
                     ),
                     React.createElement(
@@ -1970,7 +2468,8 @@ var SubContractModal = function SubContractModal(props) {
                       React.createElement(
                         "label",
                         { className: "form-input-label" },
-                        "Copper: "
+                        React.createElement("img", { src: copperIcon.src, width: "25", height: "25", alt: "" }),
+                        " Copper: "
                       )
                     ),
                     React.createElement(
@@ -1989,7 +2488,8 @@ var SubContractModal = function SubContractModal(props) {
                       React.createElement(
                         "label",
                         { className: "form-input-label" },
-                        "Sapphires: "
+                        React.createElement("img", { src: sapphireIcon.src, width: "25", height: "25", alt: "" }),
+                        " Sapphires: "
                       )
                     ),
                     React.createElement(
@@ -2008,7 +2508,8 @@ var SubContractModal = function SubContractModal(props) {
                       React.createElement(
                         "label",
                         { className: "form-input-label" },
-                        "Emeralds: "
+                        React.createElement("img", { src: emeraldIcon.src, width: "25", height: "25", alt: "" }),
+                        " Emeralds: "
                       )
                     ),
                     React.createElement(
@@ -2027,7 +2528,8 @@ var SubContractModal = function SubContractModal(props) {
                       React.createElement(
                         "label",
                         { className: "form-input-label" },
-                        "Rubies: "
+                        React.createElement("img", { src: rubyIcon.src, width: "25", height: "25", alt: "" }),
+                        " Rubies: "
                       )
                     ),
                     React.createElement(
@@ -2046,7 +2548,8 @@ var SubContractModal = function SubContractModal(props) {
                       React.createElement(
                         "label",
                         { className: "form-input-label" },
-                        "Diamonds: "
+                        React.createElement("img", { src: diamondIcon.src, width: "25", height: "25", alt: "" }),
+                        " Diamonds: "
                       )
                     ),
                     React.createElement(
@@ -2279,18 +2782,32 @@ var renderContracts = function renderContracts() {
   });
 };
 
+//Render the market view (players sell resources)
 var renderMarket = function renderMarket() {
-  ReactDOM.render(React.createElement(MarketWindow, null), document.querySelector("#main"));
+  getTokenWithCallback(function (csrfToken) {
+    sendAjax('GET', '/getRCCTR', null, function (result) {
+      ReactDOM.render(React.createElement(MarketWindow, { csrf: csrfToken, rates: result.rates }), document.querySelector("#main"));
+
+      var marketFormInputs = document.querySelectorAll("#marketForm input[type=number]");
+      for (var i = 0; i < marketFormInputs.length; i++) {
+        var input = marketFormInputs[i];
+        input.oninput = renderMarket;
+      }
+    });
+  });
 };
 
+//Render the upgrade view (players purchase mining upgrades
 var renderUpgrades = function renderUpgrades() {
   ReactDOM.render(React.createElement(UpgradesWindow, null), document.querySelector("#main"));
 };
 
+//Render the highscores view (players compare scores)
 var renderHighscores = function renderHighscores() {
   ReactDOM.render(React.createElement(HighscoreWindow, null), document.querySelector("#main"));
 };
 
+//Render the player's profile
 var renderProfile = function renderProfile() {
   ReactDOM.render(React.createElement(ProfileWindow, null), document.querySelector("#main"));
 };
@@ -2350,6 +2867,19 @@ var updateAsteroid = function updateAsteroid(data) {
 
   asteroid.updateVals(data.asteroid);
   renderProgressPanel(asteroid.progress, asteroid.toughness);
+};
+
+//Process a request from the server to update the player's account details
+var updateAccount = function updateAccount(data) {
+  //Iterate through the sent account keys and update the client's account object
+  var updateKeys = Object.keys(data);
+  for (var i = 0; i < updateKeys.length; i++) {
+    var key = updateKeys[i];
+    account[key] = data[key];
+  }
+
+  //Refresh the view in case relevant data has changed
+  loadView();
 };
 
 //Process an error message sent via sockets

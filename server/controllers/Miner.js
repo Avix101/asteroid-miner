@@ -20,9 +20,32 @@ const basicContracts = require('./../miner/basicContracts.js');
 // Import asteroid templates
 const asteroidTemplates = require('./../miner/asteroids.js');
 
+//Import trade rates
+const rates = require('./TradeRates.js');
+
 // Render the main page, pass in useful data to the template engine
 const main = (req, res) => {
   res.render('miner');
+};
+
+// Ensure input is a number
+const validateNumber = (str, min) => {
+  const num = parseInt(`${str}`, 10);
+
+  if (Number.isNaN(num)) {
+    return min;
+  }
+
+  return Math.max(num, min);
+};
+
+//Return the current trade / conversion rates for resources
+const getRCCTR = (req, res) => {
+  if(rates){
+    return res.status(200).json({ rates });
+  }
+  
+  return res.status(500).json({ error: 'Conversion rates unavailable' });
 };
 
 // Get all available basic asteroid contracts
@@ -208,18 +231,19 @@ const buyAsteroid = (request, response) => {
     return res.status(400).json({ error: 'Could not retrieve unknown standard contract' });
   }
 
-  if (req.session.account.bank.gb < basicContracts[req.body.ac].price) {
-    return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
-  }
-
   return Account.AccountModel.findById(req.session.account._id, (err, acc) => {
     if (err || !acc) {
       return res.status(400).json({ error: 'Could not find your account' });
     }
 
     const account = acc;
+    
+    if (account.bank.gb < basicContracts[req.body.ac].price) {
+      return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
+    }
+    
     account.bank.gb -= basicContracts[req.body.ac].price;
-    req.session.account.bank.gb = account.bank.gb;
+    //req.session.account.bank.gb = account.bank.gb;
     account.markModified('bank');
     const accountSave = account.save();
 
@@ -252,6 +276,68 @@ const buyAsteroid = (request, response) => {
       res.status(400).json({ error: 'Could not find your account' });
     });
   });
+};
+
+//Sell resources for Galaxy Bucks
+const sellResources = (request, response) => {
+  const req = request;
+  const res = response;
+  
+  //Validate data
+  req.body.iron = validateNumber(req.body.iron, 0);
+  req.body.copper = validateNumber(req.body.copper, 0);
+  req.body.sapphire = validateNumber(req.body.sapphire, 0);
+  req.body.emerald = validateNumber(req.body.emerald, 0);
+  req.body.ruby = validateNumber(req.body.ruby, 0);
+  req.body.diamond = validateNumber(req.body.diamond, 0);
+  
+  //Find the user's account
+  Account.AccountModel.findById(req.session.account._id, (err, acc) => {
+    if(err || !acc){
+      return res.status(400).json({ error: 'Could not find your account' });
+    }
+    
+    const account = acc;
+
+    // Subtract resources
+    account.bank.iron -= req.body.iron;
+    account.bank.copper -= req.body.copper;
+    account.bank.sapphire -= req.body.sapphire;
+    account.bank.emerald -= req.body.emerald;
+    account.bank.ruby -= req.body.ruby;
+    account.bank.diamond -= req.body.diamond;
+
+    // Verify account is not negative
+    if (
+      account.bank.iron < 0 ||
+      account.bank.copper < 0 ||
+      account.bank.sapphire < 0 ||
+      account.bank.emerald < 0 ||
+      account.bank.ruby < 0 ||
+      account.bank.diamond < 0
+    ) {
+      return res.status(400).json({ error: "You don't have that many resources to sell" });
+    }
+    
+    account.bank.gb += req.body.iron * rates.iron +
+      req.body.copper * rates.copper +
+      req.body.sapphire * rates.sapphire +
+      req.body.emerald * rates.emerald +
+      req.body.ruby * rates.ruby +
+      req.body.diamond * rates.diamond;
+
+    account.markModified('bank');
+    const savePromise = account.save();
+
+    savePromise.then(() => {
+      req.session.account = Account.AccountModel.toAPI(account);
+      res.status(201).json({ message: 'Resources successfully sold' });
+    });
+
+    return savePromise.catch(() => {
+      res.status(500).json({ message: 'Resources could not be sold' });
+    });
+  })
 };
 
 const joinContractAsPartner = (request, response) => {
@@ -292,18 +378,19 @@ const buyPartnerAsteroid = (request, response) => {
     return res.status(400).json({ error: 'Could not retrieve unknown standard contract' });
   }
 
-  if (req.session.account.bank.gb < basicContracts[req.body.ac].price) {
-    return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
-  }
-
   return Account.AccountModel.findById(req.session.account._id, (err, acc) => {
     if (err || !acc) {
       return res.status(400).json({ error: 'Could not find your account' });
     }
 
     const account = acc;
+    
+    if (account.bank.gb < basicContracts[req.body.ac].price) {
+      return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
+    }
+    
     account.bank.gb -= (basicContracts[req.body.ac].price / 4);
-    req.session.account.bank.gb = account.bank.gb;
+    //req.session.account.bank.gb = account.bank.gb;
     account.markModified('bank');
     const accountSave = account.save();
 
@@ -337,17 +424,6 @@ const buyPartnerAsteroid = (request, response) => {
       res.status(400).json({ error: 'Could not find your account' });
     });
   });
-};
-
-// Ensure input is a number
-const validateNumber = (str, min) => {
-  const num = parseInt(`${str}`, 10);
-
-  if (Number.isNaN(num)) {
-    return min;
-  }
-
-  return Math.max(num, min);
 };
 
 // Create a sub contract from an existing contract
@@ -450,12 +526,14 @@ const getAd = (req, res) => {
 
 module.exports = {
   main,
+  getRCCTR,
   getContracts,
   getSubContracts,
   getPartnerContracts,
   joinContractAsPartner,
   getMyContracts,
   buyAsteroid,
+  sellResources,
   acceptSubContract,
   buyPartnerAsteroid,
   createSubContract,

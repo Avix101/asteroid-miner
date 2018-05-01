@@ -153,6 +153,19 @@ const handleSubContractSubmit = (e) => {
   return false;
 }
 
+//Handle a request to sell resources for Galaxy Bucks
+const handleMarketSubmit = (e) => {
+  e.preventDefault();
+  
+  sendAjax('POST', $("#marketForm").attr("action"), $("#marketForm").serialize(), (data) => {
+    handleSuccess(data.message);
+    socket.emit('getMyBankData');
+    loadView();
+  });
+  
+  return false;
+};
+
 // Buy a contract as a partner one
 const purchaseAsPartnerContract = (e) => {
   const asteroidClass = e.target.getAttribute('data-purchase');
@@ -440,18 +453,236 @@ const SubContracts = (props) => {
   );
 };
 
+//Helper function that returns a compact version of the requested number
+const compressNumber = (num) => {
+  if(num > 1000000000000){
+    num = `${Math.floor(num / 1000000000000)}T`;
+  } else if(num > 1000000000){
+    num = `${Math.floor(num / 1000000000)}B`;
+  } else if(num > 1000000){
+    num = `${Math.floor(num / 1000000)}M`;
+  }
+  
+  if(Number.isNaN(num)){
+    num = 0;
+  }
+  
+  return num;
+}
+
+//Construct a window for selling resources back to the server for Galaxy Bucks
 const MarketWindow = (props) => {
+  
+  //If the user's bank has not loaded, wait for it to do so
+  if(!account.bank){
+    return (
+      <div className="container">
+        <div className="jumbotron">
+          <p className="lead">Loading account data... <span className="fas fa-sync fa-spin"></span></p>
+        </div>
+      </div>
+    );
+  }
+  
+  //Grab current input values to calculate potential pay
+  const currentInputs = document.querySelectorAll("#marketForm input[type=number]");
+  const currentValues = {};
+  for(let i = 0; i < currentInputs.length; i++){
+    const input = currentInputs[i];
+    currentValues[input.name] = parseInt(input.value, 10);
+    
+    //Make sure the entered value is a number
+    if(Number.isNaN(currentValues[input.name])){
+      currentValues[input.name] = 0;
+    }
+  }
+  
+  //Calculate the total pay
+  const totalPay = compressNumber(
+    props.rates.iron * currentValues.iron +
+    props.rates.copper * currentValues.copper +
+    props.rates.sapphire * currentValues.sapphire +
+    props.rates.emerald * currentValues.emerald +
+    props.rates.ruby * currentValues.ruby +
+    props.rates.diamond * currentValues.diamond
+  );
+  
   return (
     <div className="container">
       <div className="jumbotron">
         <h1 className="display-3">Sell Resources:</h1>
         <p className="lead">In need of some Galaxy Bucks? Sell your hard-earned loot!</p>
         <hr className="my-4" />
+          <form id="marketForm" className="form" onSubmit={handleMarketSubmit}
+            action="/sellResources"
+          >
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center">
+                <p className="lead">Resources</p>
+              </div>
+              <div className="col-sm-4 text-center">
+                <p className="lead">Amount to Sell</p>
+              </div>
+              <div className="col-sm-2 text-center">
+                <p className="lead">Price Per (RCCTR*)</p>
+              </div>
+              <div className="col-sm-2 text-center">
+                <p className="lead">Payment</p>
+              </div>
+            </div>
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center flex-center border border-primary">
+                <label className="form-input-label">
+                  <img src={ironIcon.src} width="25" height="25" alt="" /> Iron: ({account.bank.iron})</label>
+              </div>
+              <div className="col-sm-4 flex-center">
+                <input name="iron" className="form-control" type="number" min="0" max={account.bank.iron} />
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-info flex-center">
+                  <span>{props.rates.iron}x</span>
+                </div>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-success flex-center">
+                  <span>{compressNumber(props.rates.iron * currentValues.iron)} GB</span>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center flex-center border border-primary">
+                <label className="form-input-label">
+                  <img src={copperIcon.src} width="25" height="25" alt="" /> Copper: ({account.bank.copper})</label>
+              </div>
+              <div className="col-sm-4">
+                <input name="copper" className="form-control" type="number" min="0" max={account.bank.copper} />
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-info flex-center">
+                  <span>{props.rates.copper}x</span>
+                </div>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-success flex-center">
+                  <span>{compressNumber(props.rates.copper * currentValues.copper)} GB</span>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center flex-center border border-primary">
+                <label className="form-input-label">
+                  <img src={sapphireIcon.src} width="25" height="25" alt="" /> Sapphires: ({account.bank.sapphire})</label>
+              </div>
+              <div className="col-sm-4">
+                <input name="sapphire" className="form-control" type="number" min="0" max={account.bank.sapphire} />
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-info flex-center">
+                  <span>{props.rates.sapphire}x</span>
+                </div>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-success flex-center">
+                  <span>{compressNumber(props.rates.sapphire * currentValues.sapphire)} GB</span>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center flex-center border border-primary">
+                <label className="form-input-label">
+                  <img src={emeraldIcon.src} width="25" height="25" alt="" /> Emeralds: ({account.bank.emerald})</label>
+              </div>
+              <div className="col-sm-4">
+                <input name="emerald" className="form-control" type="number" min="0" max={account.bank.emerald} />
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-info flex-center">
+                  <span>{props.rates.emerald}x</span>
+                </div>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-success flex-center">
+                  <span>{compressNumber(props.rates.emerald * currentValues.emerald)} GB</span>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center flex-center border border-primary">
+                <label className="form-input-label">
+                  <img src={rubyIcon.src} width="25" height="25" alt="" /> Rubies: ({account.bank.ruby})</label>
+              </div>
+              <div className="col-sm-4">
+                <input name="ruby" className="form-control" type="number" min="0" max={account.bank.ruby} />
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-info flex-center">
+                  <span>{props.rates.ruby}x</span>
+                </div>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-success flex-center">
+                  <span>{compressNumber(props.rates.ruby * currentValues.ruby)} GB</span>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center flex-center border border-primary">
+                <label className="form-input-label">
+                  <img src={diamondIcon.src} width="25" height="25" alt="" /> Diamonds: ({account.bank.diamond})</label>
+              </div>
+              <div className="col-sm-4">
+                <input name="diamond" className="form-control" type="number" min="0" max={account.bank.diamond} />
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-info flex-center">
+                  <span>{props.rates.diamond}x</span>
+                </div>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-success flex-center">
+                  <span>{compressNumber(props.rates.diamond * currentValues.diamond)} GB</span>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div className="row justify-content-center">
+              <div className="col-sm-4 text-center flex-center">
+                <p>-></p>
+              </div>
+              <div className="col-sm-4 text-center">
+                <p>-></p>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <p>-></p>
+              </div>
+              <div className="col-sm-2 text-center flex-center">
+                <div className="full-size border border-success flex-center">
+                  <span>{compressNumber(totalPay)} GB</span>
+                </div>
+              </div>
+            </div>
+            <input className="hidden" name="_csrf" value={props.csrf} />
+            <hr />
+            <div className="row justify-content-center">
+              <div className="col-sm-8 text-center flex-center">
+              </div>
+              <div className="col-sm-4 text-center flex-center">
+                <input type="submit" className="btn btn-lg btn-success" value="Sell Resources" />
+              </div>
+            </div>
+          </form>
+          <p className="lead font-italic">*RCCTR: Robo Corp&reg; Current Trade Rate</p>
       </div>
     </div>
   );
 };
 
+//Construct a window to allow the player to purchase upgrades
 const UpgradesWindow = (props) => {
   return (
     <div className="container">
@@ -464,6 +695,7 @@ const UpgradesWindow = (props) => {
   );
 };
 
+//Construct a window to allow the player to view the game's highscores
 const HighscoreWindow = (props) => {
   return (
     <div className="container">
@@ -476,6 +708,7 @@ const HighscoreWindow = (props) => {
   );
 };
 
+//Construct a window to allow the player to view their profile
 const ProfileWindow = (props) => {
   return (
     <div className="container">
@@ -669,7 +902,8 @@ const SubContractModal = (props) => {
                     <label className="form-input-label">Resources Given</label>
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
-                        <label className="form-input-label">Galaxy Bucks: </label>
+                        <label className="form-input-label">
+                          <img src={gbIcon.src} width="25" height="25" alt="" /> Galaxy Bucks: </label>
                       </div>
                       <div className="col-sm-8">
                         <input name="gb" className="form-control" type="number" min="0" max="1000000" />
@@ -678,7 +912,8 @@ const SubContractModal = (props) => {
                     <hr />
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
-                        <label className="form-input-label">Iron: </label>
+                        <label className="form-input-label">
+                          <img src={ironIcon.src} width="25" height="25" alt="" /> Iron: </label>
                       </div>
                       <div className="col-sm-8">
                         <input name="iron" className="form-control" type="number" min="0" max="1000000" />
@@ -687,7 +922,8 @@ const SubContractModal = (props) => {
                     <hr />
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
-                        <label className="form-input-label">Copper: </label>
+                        <label className="form-input-label">
+                          <img src={copperIcon.src} width="25" height="25" alt="" /> Copper: </label>
                       </div>
                       <div className="col-sm-8">
                         <input name="copper" className="form-control" type="number" min="0" max="1000000" />
@@ -696,7 +932,8 @@ const SubContractModal = (props) => {
                     <hr />
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
-                        <label className="form-input-label">Sapphires: </label>
+                        <label className="form-input-label">
+                          <img src={sapphireIcon.src} width="25" height="25" alt="" /> Sapphires: </label>
                       </div>
                       <div className="col-sm-8">
                         <input name="sapphire" className="form-control" type="number" min="0" max="1000000" />
@@ -705,7 +942,8 @@ const SubContractModal = (props) => {
                     <hr />
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
-                        <label className="form-input-label">Emeralds: </label>
+                        <label className="form-input-label">
+                          <img src={emeraldIcon.src} width="25" height="25" alt="" /> Emeralds: </label>
                       </div>
                       <div className="col-sm-8">
                         <input name="emerald" className="form-control" type="number" min="0" max="1000000" />
@@ -714,7 +952,8 @@ const SubContractModal = (props) => {
                     <hr />
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
-                        <label className="form-input-label">Rubies: </label>
+                        <label className="form-input-label">
+                          <img src={rubyIcon.src} width="25" height="25" alt="" /> Rubies: </label>
                       </div>
                       <div className="col-sm-8">
                         <input name="ruby" className="form-control" type="number" min="0" max="1000000" />
@@ -723,7 +962,8 @@ const SubContractModal = (props) => {
                     <hr />
                     <div className="row justify-content-center">
                       <div className="col-sm-4 text-center">
-                        <label className="form-input-label">Diamonds: </label>
+                        <label className="form-input-label">
+                          <img src={diamondIcon.src} width="25" height="25" alt="" /> Diamonds: </label>
                       </div>
                       <div className="col-sm-8">
                         <input name="diamond" className="form-control" type="number" min="0" max="1000000" />
@@ -963,13 +1203,25 @@ const renderContracts = () => {
   });
 };
 
+//Render the market view (players sell resources)
 const renderMarket = () => {
-  ReactDOM.render(
-    <MarketWindow />,
-    document.querySelector("#main")
-  );
+  getTokenWithCallback((csrfToken) => {
+    sendAjax('GET', '/getRCCTR', null, (result) => {
+      ReactDOM.render(
+        <MarketWindow csrf={csrfToken} rates={result.rates} />,
+        document.querySelector("#main")
+      );
+      
+      const marketFormInputs = document.querySelectorAll("#marketForm input[type=number]");
+      for(let i = 0; i < marketFormInputs.length; i++){
+        const input = marketFormInputs[i];
+        input.oninput = renderMarket;
+      }
+    });
+  });
 };
 
+//Render the upgrade view (players purchase mining upgrades
 const renderUpgrades = () => {
   ReactDOM.render(
     <UpgradesWindow />,
@@ -977,6 +1229,7 @@ const renderUpgrades = () => {
   );
 };
 
+//Render the highscores view (players compare scores)
 const renderHighscores = () => {
   ReactDOM.render(
     <HighscoreWindow />,
@@ -984,6 +1237,7 @@ const renderHighscores = () => {
   );
 };
 
+//Render the player's profile
 const renderProfile = () => {
   ReactDOM.render(
     <ProfileWindow />,

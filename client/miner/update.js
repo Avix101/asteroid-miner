@@ -45,6 +45,19 @@ const updateAsteroid = (data) => {
   renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
 
+//Process a request from the server to update the player's account details
+const updateAccount = (data) => {
+  //Iterate through the sent account keys and update the client's account object
+  const updateKeys = Object.keys(data);
+  for(let i = 0; i < updateKeys.length; i++){
+    const key = updateKeys[i];
+    account[key] = data[key];
+  }
+  
+  //Refresh the view in case relevant data has changed
+  loadView();
+};
+
 //Process an error message sent via sockets
 const processSocketError = (data) => {
   handleError(data.error);

@@ -66,10 +66,10 @@ class Asteroid {
   // Get the asteroid's position (this is just guesswork- implement something better)
   static getBoundingRect() {
     return {
-      x: 910,
-      y: 490,
-      width: 100,
-      height: 100,
+      x: 660,
+      y: 240,
+      width: 600,
+      height: 600,
     };
   }
 
@@ -126,7 +126,7 @@ class Asteroid {
           account.markModified('bank');
           account.save();
           this.contract.remove();
-        },
+        }
       );
     });
   }

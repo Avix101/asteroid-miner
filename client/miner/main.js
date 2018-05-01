@@ -12,9 +12,17 @@ let adAudio;
 
 //Static image files
 let galaxyBg;
+let gbIcon;
+let ironIcon;
+let copperIcon;
+let sapphireIcon;
+let emeraldIcon;
+let rubyIcon;
+let diamondIcon;
 
 //Variables to manage socket
 let socket, hash;
+let account = {};
 
 //Variables to handle update calls
 let animationFrame;
@@ -98,12 +106,19 @@ const loadView = () => {
 //Run this function when the page loads
 const init = () => {
   
-  //Load the requested view
-  loadView();
-  
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
   galaxyBg = document.querySelector("#galaxyBg");
+  gbIcon = document.querySelector("#gbIcon");
+  ironIcon = document.querySelector("#ironIcon");
+  copperIcon = document.querySelector("#copperIcon");
+  sapphireIcon = document.querySelector("#sapphireIcon");
+  emeraldIcon = document.querySelector("#emeraldIcon");
+  rubyIcon = document.querySelector("#rubyIcon");
+  diamondIcon = document.querySelector("#diamondIcon");
+  
+  //Load the requested view
+  loadView();
   
   //Construct prep canvas (for building frames)
   prepCanvas = document.createElement('canvas');
@@ -118,8 +133,12 @@ const init = () => {
   //socket.on('event', eventFunc);
   socket.on('spawnAsteroid', spawnAsteroid);
   socket.on('asteroidUpdate', updateAsteroid);
+  socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);
   socket.on('errorMessage', processSocketError);
+  
+  //Load the player's bank data
+  socket.emit('getMyBankData');
   
   //Start the update loop
   animationFrame = requestAnimationFrame(update);
