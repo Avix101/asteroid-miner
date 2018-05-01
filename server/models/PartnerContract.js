@@ -49,12 +49,13 @@ PartnerContractSchema.statics.findContractsFor = (id, callback) => {
 
 // Finds  partner contracts the user participates in and isn't the direct owner of.
 PartnerContractSchema.statics.findReadyPartnerContractsFor = (id, callback) => {
+  const objId = mongoose.Types.ObjectId(id);
   const search = {
     $and: [
       {
         $or: [
           { ownerId: id },
-          { partners: id },
+          { partners: objId },
         ],
       },
       {

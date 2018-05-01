@@ -176,6 +176,7 @@ const getMyContracts = (req, res) =>
           req.session.account._id,
           (er3, res3) => {
             if (er3) {
+              console.log(er3);
               return res.status(500).json({ error: 'Could not retrieve contracts' });
             }
 
