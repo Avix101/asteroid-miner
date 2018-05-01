@@ -2006,6 +2006,175 @@ var UpgradesWindow = function UpgradesWindow(props) {
 
 //Construct a window to allow the player to view the game's highscores
 var HighscoreWindow = function HighscoreWindow(props) {
+
+  console.log(props.scores);
+
+  var scores = props.scores.map(function (score, index) {
+
+    var color = "primary";
+    if (score.username === username) {
+      color = "info";
+    }
+
+    return React.createElement(
+      "li",
+      { className: "list-group-item d-flex border border-" + color },
+      React.createElement(
+        "div",
+        { className: "container" },
+        React.createElement(
+          "div",
+          { className: "row justify-content-center" },
+          React.createElement(
+            "div",
+            { className: "col-lg-3 flex-center" },
+            React.createElement(
+              "span",
+              { className: "badge badge-" + color + " badge-pill" },
+              "#",
+              index + 1
+            ),
+            React.createElement(
+              "span",
+              { className: "lead space-left" },
+              " User: ",
+              score.username
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-lg-6" },
+            React.createElement(
+              "p",
+              { className: "lead text-center" },
+              "Resources"
+            ),
+            React.createElement(
+              "div",
+              { className: "flex-center" },
+              React.createElement(
+                "ul",
+                null,
+                React.createElement(
+                  "li",
+                  { className: "flex-center" },
+                  React.createElement("img", { width: "25", height: "25", src: gbIcon.src, alt: "" }),
+                  "GB: ",
+                  score.bank.gb
+                ),
+                React.createElement(
+                  "li",
+                  { className: "flex-center" },
+                  React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+                  "Iron: ",
+                  score.bank.iron
+                ),
+                React.createElement(
+                  "li",
+                  { className: "flex-center" },
+                  React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+                  "Copper: ",
+                  score.bank.copper
+                ),
+                React.createElement(
+                  "li",
+                  { className: "flex-center" },
+                  React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+                  "Sapphires: ",
+                  score.bank.sapphire
+                )
+              ),
+              React.createElement(
+                "ul",
+                null,
+                React.createElement(
+                  "li",
+                  { className: "flex-center" },
+                  React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+                  "Emeralds: ",
+                  score.bank.emerald
+                ),
+                React.createElement(
+                  "li",
+                  { className: "flex-center" },
+                  React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+                  "Rubies: ",
+                  score.bank.ruby
+                ),
+                React.createElement(
+                  "li",
+                  { className: "flex-center" },
+                  React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+                  "Diamonds: ",
+                  score.bank.diamond
+                )
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "col-lg-3 flex-center" },
+            React.createElement(
+              "p",
+              { className: "lead" },
+              "Score: ",
+              score.score
+            )
+          )
+        )
+      )
+    );
+  });
+
+  var scoreLists = [];
+  var paginationTabs = [];
+
+  //Break up the number of returned scores into chunks of 10
+  for (var i = 0; i < scores.length; i += 10) {
+
+    var numScoresLeft = scores.length - i;
+    var scoreSet = void 0;
+
+    if (numScoresLeft <= 10) {
+      scoreSet = scores.slice(i);
+    } else {
+      scoreSet = scores.slice(i, i + 10);
+    }
+
+    //If it's the first set, make it visible. Otherwise, hide the set
+    if (i == 0) {
+      scoreLists.push(React.createElement(
+        "ul",
+        { id: "scoreSet" + scoreLists.length, className: "list-group" },
+        scoreSet
+      ));
+      paginationTabs.push(React.createElement(
+        "li",
+        { id: "scoreLink" + paginationTabs.length, className: "page-item active" },
+        React.createElement(
+          "button",
+          { className: "page-link", "data-set": paginationTabs.length, onClick: changeScoreSet },
+          paginationTabs.length + 1
+        )
+      ));
+    } else {
+      scoreLists.push(React.createElement(
+        "ul",
+        { id: "scoreSet" + scoreLists.length, className: "list-group hidden" },
+        scoreSet
+      ));
+      paginationTabs.push(React.createElement(
+        "li",
+        { id: "scoreLink" + paginationTabs.length, className: "page-item" },
+        React.createElement(
+          "button",
+          { className: "page-link", "data-set": paginationTabs.length, onClick: changeScoreSet },
+          paginationTabs.length + 1
+        )
+      ));
+    }
+  }
+
   return React.createElement(
     "div",
     { className: "container" },
@@ -2022,9 +2191,57 @@ var HighscoreWindow = function HighscoreWindow(props) {
         { className: "lead" },
         "Only the best of the best could ever hope to be on this page!"
       ),
-      React.createElement("hr", { className: "my-4" })
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "div",
+        { id: "highscoreList" },
+        scoreLists
+      ),
+      React.createElement(
+        "div",
+        { className: "flex-center" },
+        React.createElement(
+          "ul",
+          { id: "scorePagination", className: "pagination pagination-lg moveDown" },
+          React.createElement(
+            "li",
+            { className: "page-item" },
+            React.createElement(
+              "button",
+              { className: "page-link", "data-set": "0", onClick: changeScoreSet },
+              "\xAB"
+            )
+          ),
+          paginationTabs,
+          React.createElement(
+            "li",
+            { className: "page-item" },
+            React.createElement(
+              "button",
+              { className: "page-link", "data-set": paginationTabs.length - 1, onClick: changeScoreSet },
+              "\xBB"
+            )
+          )
+        )
+      )
     )
   );
+};
+
+//Helper function to change the set of actively visible highscores
+var changeScoreSet = function changeScoreSet(e) {
+  //Turn off active link / hide the active score set
+  var scorePagination = document.querySelector("#scorePagination");
+  var activeLink = scorePagination.querySelector(".active");
+  var activeLinkId = activeLink.getAttribute("id");
+  var activeScoreSet = document.querySelector("#scoreSet" + activeLinkId.charAt(activeLinkId.length - 1));
+  activeLink.classList.remove("active");
+  activeScoreSet.classList.add("hidden");
+
+  //Active the necessary tab
+  var dataSet = e.target.getAttribute("data-set");
+  document.querySelector("#scoreLink" + dataSet).classList.add("active");
+  document.querySelector("#scoreSet" + dataSet).classList.remove("hidden");
 };
 
 //Construct a window to allow the player to view their profile
@@ -2804,7 +3021,13 @@ var renderUpgrades = function renderUpgrades() {
 
 //Render the highscores view (players compare scores)
 var renderHighscores = function renderHighscores() {
-  ReactDOM.render(React.createElement(HighscoreWindow, null), document.querySelector("#main"));
+  //Initially create a blank panel
+  ReactDOM.render(React.createElement(HighscoreWindow, { scores: [] }), document.querySelector("#main"));
+
+  //Request highscore data and then display the scores
+  sendAjax('GET', '/getHighscores', null, function (result) {
+    ReactDOM.render(React.createElement(HighscoreWindow, { scores: result.scores }), document.querySelector("#main"));
+  });
 };
 
 //Render the player's profile

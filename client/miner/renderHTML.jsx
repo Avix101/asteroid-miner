@@ -697,15 +697,129 @@ const UpgradesWindow = (props) => {
 
 //Construct a window to allow the player to view the game's highscores
 const HighscoreWindow = (props) => {
+  
+  console.log(props.scores);
+  
+  const scores = props.scores.map((score, index) => {
+    
+    let color = "primary";
+    if(score.username === username){
+      color = "info";
+    }
+    
+    return (
+      <li className={`list-group-item d-flex border border-${color}`}>
+        <div className="container">
+          <div className="row justify-content-center">
+            <div className="col-lg-3 flex-center">
+              <span className={`badge badge-${color} badge-pill`}>#{index + 1}</span> 
+              <span className="lead space-left"> User: {score.username}</span>
+            </div>
+            <div className="col-lg-6">
+              <p className="lead text-center">Resources</p>
+              <div className="flex-center">
+                <ul>
+                  <li className="flex-center"><img width="25" height="25" src={gbIcon.src} alt="" />GB: {score.bank.gb}</li>
+                  <li className="flex-center"><img width="25" height="25" src={ironIcon.src} alt="" />Iron: {score.bank.iron}</li>
+                  <li className="flex-center"><img width="25" height="25" src={copperIcon.src} alt="" />Copper: {score.bank.copper}</li>
+                  <li className="flex-center"><img width="25" height="25" src={sapphireIcon.src} alt="" />Sapphires: {score.bank.sapphire}</li>
+                </ul>
+                <ul>
+                  <li className="flex-center"><img width="25" height="25" src={emeraldIcon.src} alt="" />Emeralds: {score.bank.emerald}</li>
+                  <li className="flex-center"><img width="25" height="25" src={rubyIcon.src} alt="" />Rubies: {score.bank.ruby}</li>
+                  <li className="flex-center"><img width="25" height="25" src={diamondIcon.src} alt="" />Diamonds: {score.bank.diamond}</li>
+                </ul>
+              </div>
+            </div>
+            <div className="col-lg-3 flex-center">
+              <p className="lead">Score: {score.score}</p>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  });
+  
+  let scoreLists = [];
+  let paginationTabs = [];
+  
+  //Break up the number of returned scores into chunks of 10
+  for(let i = 0; i < scores.length; i += 10){
+    
+    const numScoresLeft = scores.length - i;
+    let scoreSet;
+    
+    if(numScoresLeft <= 10){
+      scoreSet = scores.slice(i);
+    } else {
+      scoreSet = scores.slice(i, i + 10);
+    }
+    
+    //If it's the first set, make it visible. Otherwise, hide the set
+    if(i == 0){
+      scoreLists.push(
+        <ul id={`scoreSet${scoreLists.length}`} className="list-group">
+          {scoreSet}
+        </ul>
+      );
+      paginationTabs.push(
+        <li id={`scoreLink${paginationTabs.length}`} className="page-item active">
+          <button className="page-link" data-set={paginationTabs.length} onClick={changeScoreSet}>{paginationTabs.length + 1}</button>
+        </li>
+      );
+    } else {
+      scoreLists.push(
+        <ul id={`scoreSet${scoreLists.length}`} className="list-group hidden">
+          {scoreSet}
+        </ul>
+      );
+      paginationTabs.push(
+        <li id={`scoreLink${paginationTabs.length}`} className="page-item">
+          <button className="page-link" data-set={paginationTabs.length} onClick={changeScoreSet}>{paginationTabs.length + 1}</button>
+        </li>
+      );
+    }
+  }
+  
   return (
     <div className="container">
       <div className="jumbotron">
         <h1 className="display-3">Top Miners:</h1>
         <p className="lead">Only the best of the best could ever hope to be on this page!</p>
         <hr className="my-4" />
+        <div id="highscoreList">
+          {scoreLists}
+        </div>
+        <div className="flex-center">
+          <ul id="scorePagination" className="pagination pagination-lg moveDown">
+            <li className="page-item">
+              <button className="page-link" data-set="0" onClick={changeScoreSet}>&laquo;</button>
+            </li>
+            {paginationTabs}
+            <li className="page-item">
+              <button className="page-link" data-set={paginationTabs.length - 1} onClick={changeScoreSet}>&raquo;</button>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   );
+};
+
+//Helper function to change the set of actively visible highscores
+const changeScoreSet = (e) => {
+  //Turn off active link / hide the active score set
+  const scorePagination = document.querySelector("#scorePagination");
+  const activeLink = scorePagination.querySelector(".active");
+  const activeLinkId = activeLink.getAttribute("id");
+  const activeScoreSet = document.querySelector(`#scoreSet${activeLinkId.charAt(activeLinkId.length - 1)}`);
+  activeLink.classList.remove("active");
+  activeScoreSet.classList.add("hidden");
+  
+  //Active the necessary tab
+  const dataSet = e.target.getAttribute("data-set");
+  document.querySelector(`#scoreLink${dataSet}`).classList.add("active");
+  document.querySelector(`#scoreSet${dataSet}`).classList.remove("hidden");
 };
 
 //Construct a window to allow the player to view their profile
@@ -1231,10 +1345,19 @@ const renderUpgrades = () => {
 
 //Render the highscores view (players compare scores)
 const renderHighscores = () => {
+  //Initially create a blank panel
   ReactDOM.render(
-    <HighscoreWindow />,
+    <HighscoreWindow scores={[]} />,
     document.querySelector("#main")
   );
+  
+  //Request highscore data and then display the scores
+  sendAjax('GET', '/getHighscores', null, (result) => {
+    ReactDOM.render(
+      <HighscoreWindow scores={result.scores}/>,
+      document.querySelector("#main")
+    );
+  });
 };
 
 //Render the player's profile

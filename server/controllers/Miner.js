@@ -25,7 +25,8 @@ const rates = require('./TradeRates.js');
 
 // Render the main page, pass in useful data to the template engine
 const main = (req, res) => {
-  res.render('miner');
+  const { username } = req.session.account;
+  res.render('miner', { username });
 };
 
 // Ensure input is a number
@@ -524,9 +525,43 @@ const getAd = (req, res) => {
   return res.status(200).json({ ad: randomAd });
 };
 
+// Return a processed array of player highscores
+const getHighscores = (req, res) => {
+  Account.AccountModel.findAll((err, accounts) => {
+    if (err || !accounts) {
+      return res.status(500).json({ error: 'Highscores could not be processed' });
+    }
+
+    const playerData = [];
+    for (let i = 0; i < accounts.length; i++) {
+      const account = accounts[i];
+      const score = (Math.floor(account.bank.gb * 0.01)) +
+      (account.bank.iron * rates.iron) +
+      (account.bank.copper * rates.copper) +
+      (account.bank.sapphire * rates.sapphire) +
+      (account.bank.emerald * rates.emerald) +
+      (account.bank.ruby * rates.ruby) +
+      (account.bank.diamond * rates.diamond);
+
+      const data = {
+        username: account.username,
+        bank: account.bank,
+        score,
+      };
+
+      playerData.push(data);
+    }
+
+    const scores = playerData.sort((dataA, dataB) => dataB.score - dataA.score);
+
+    return res.status(200).json({ scores });
+  });
+};
+
 module.exports = {
   main,
   getRCCTR,
+  getHighscores,
   getContracts,
   getSubContracts,
   getPartnerContracts,

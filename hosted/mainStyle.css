@@ -91,6 +91,14 @@
   height: 100%;
 }
 
+.space-left {
+  margin-left: 8px;
+}
+
+#highscoreList li {
+  margin-bottom: 8px;
+}
+
 #marketForm label {
   margin-bottom: 0px;
 }

@@ -89,6 +89,9 @@ AccountSchema.statics.findByIdMultiple = (ids, callback) => {
   return AccountModel.find(search, callback);
 };
 
+// Grab all existing accounts
+AccountSchema.statics.findAll = callback => AccountModel.find({}, callback);
+
 // Generate a new hash and salt for a password
 AccountSchema.statics.generateHash = (password, callback) => {
   const salt = crypto.randomBytes(saltLength);
