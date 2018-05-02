@@ -1,3 +1,4 @@
+// Robo Corp trade rates! Subject to change
 const rates = {
   iron: 20,
   copper: 37,

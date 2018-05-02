@@ -1,3 +1,4 @@
+// Defines basic information for standard contracts (+ reward rates)
 const contracts = {
   a: {
     name: 'Junk Asteroid',

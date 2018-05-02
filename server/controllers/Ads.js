@@ -1,3 +1,4 @@
+// Templates for canvas-powered ads
 const Ads = {
   toothbrush: {
     audio: '/assets/aud/Ad_Toothbrush.ogg',
@@ -191,6 +192,7 @@ const Ads = {
   },
 };
 
+// Returns a random ad from the object above
 const getRandomAd = () => {
   const adKeys = Object.keys(Ads);
   const ad = Ads[adKeys[Math.floor(Math.random() * adKeys.length)]];
