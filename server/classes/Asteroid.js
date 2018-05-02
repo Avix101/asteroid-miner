@@ -84,6 +84,8 @@ class Asteroid {
 
   // Distribute the rewards when the asteroid is finished
   distributeRewards() {
+    const shares = {};
+
     // Find the owner account and give them their rewards
     Account.AccountModel.findById(this.contract.ownerId, (err, acc) => {
       if (err || !acc) {
@@ -91,17 +93,16 @@ class Asteroid {
       }
 
       const account = acc;
-
-      // Give the owner their rewards
       const rewardKeys = Object.keys(this.rewards);
-      for (let i = 0; i < rewardKeys.length; i++) {
-        const key = rewardKeys[i];
-        account.bank[key] += this.rewards[key];
-      }
 
       console.dir(this.contract._doc);
 
       if (!this.contract._doc.partners) {
+        // Give the owner their rewards
+        for (let i = 0; i < rewardKeys.length; i++) {
+          const key = rewardKeys[i];
+          account.bank[key] += this.rewards[key];
+        }
         console.log('Sub Contract');
         return SubContract.SubContractModel.findSubContractsOf(
           this.contract._id,
@@ -134,9 +135,29 @@ class Asteroid {
       console.log('Partner Contract');
       console.log(`Partners detected: ${this.contract._doc.partners.length}`);
 
+      shares[this.contract.ownerId] = {
+        id: this.contract.ownerId,
+        shares: 1,
+      };
+
       for (let i = 0; i < this.contract._doc.partners.length; i++) {
-        console.log(this.contract._doc.partners[i]);
-        Account.AccountModel.findById(this.contract._doc.partners[i], (er3, partnerAcc) => {
+        if (!shares[this.contract._doc.partners[i]]) {
+          shares[this.contract._doc.partners[i]] = {
+            id: this.contract._doc.partners[i],
+            shares: 1,
+          };
+        } else {
+          shares[this.contract._doc.partners[i]].shares += 1;
+        }
+      }
+
+      const sharesKeys = Object.keys(shares);
+
+
+      for (let i = 0; i < sharesKeys.length; i++) {
+        const shareKey = sharesKeys[i];
+
+        Account.AccountModel.findById(shares[shareKey].id, (er3, partnerAcc) => {
           if (er3 || !partnerAcc) {
             return;
           }
@@ -147,7 +168,7 @@ class Asteroid {
 
           for (let z = 0; z < rewardKeys.length; z++) {
             const key = rewardKeys[z];
-            partnerAccount[key] += this.rewards[key];
+            partnerAccount.bank[key] += (this.rewards[key] * (shares[shareKey].shares / 4));
           }
 
           partnerAccount.markModified('bank');
