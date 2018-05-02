@@ -837,7 +837,7 @@ var init = function init() {
   //reaches into various contracts (different game rooms)
   setInterval(function () {
     renderMyContractsPanel();
-    socket.emit('getMyBankData');
+    //socket.emit('getMyBankData');
   }, 2000);
 
   //Grab static images included in client page download
