@@ -85,8 +85,9 @@ const signup = (request, response) => {
         to: req.body.email,
         from: 'noreply@asteroidminers.com',
         subject: 'Welcome to Asteroid Miners',
-        text: '',
-        html: `<h2>Welcome to Asteroid Miners ${req.body.username}!</h2> <p>Good luck out there!</p>`,
+        text: 'Hello plain world',
+        html: '<p>Hello HTML world!</p>',
+        templateId: 'f55807e2-fc5c-4a12-a8cc-f274e70d2518',
       };
       sgMail.send(msg);
       req.session.account = Account.AccountModel.toAPI(newAccount);
