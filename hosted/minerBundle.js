@@ -874,7 +874,7 @@ var ContractWindow = function ContractWindow(props) {
       React.createElement(
         "p",
         { className: "lead" },
-        "Profits are split evenly between you and all partners."
+        "Partner contracts are split into 25% shares (4 shares per asteroid) on purchase, one of which belonging to the origial buyer. Costs and profits are split evenly between the owner and all partners. If you wish to claim additional shares, accept the partner contract multiple times"
       ),
       React.createElement("div", { id: "partnerContracts" }),
       React.createElement("hr", null),
@@ -2519,6 +2519,7 @@ var getGalaxyBucks = function getGalaxyBucks(e) {
   getTokenWithCallback(function (csrfToken) {
     var data = "gb=" + amount + "&_csrf=" + csrfToken;
     sendAjax('POST', '/getGalaxyBucks', data, function (data) {
+      socket.emit('getMyBankData');
       handleSuccess(data.message);
     });
   });

@@ -386,7 +386,9 @@ const buyPartnerAsteroid = (request, response) => {
 
     const account = acc;
 
-    if (account.bank.gb < basicContracts[req.body.ac].price) {
+    console.log(account.bank);
+
+    if (account.bank.gb < (basicContracts[req.body.ac].price / 4)) {
       return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
     }
 

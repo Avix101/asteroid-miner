@@ -20,7 +20,9 @@ const ContractWindow = (props) => {
         <hr />
         
         <h2>Partner Contracts</h2>
-        <p className="lead">Profits are split evenly between you and all partners.</p>
+        <p className="lead">Partner contracts are split into 25% shares (4 shares per asteroid) on purchase,
+        one of which belonging to the origial buyer. Costs and profits are split evenly between the owner and all partners.
+        If you wish to claim additional shares, accept the partner contract multiple times</p>
         <div id="partnerContracts"></div>
         <hr />
         
@@ -923,6 +925,7 @@ const getGalaxyBucks = (e) => {
   getTokenWithCallback((csrfToken) => {
     const data = `gb=${amount}&_csrf=${csrfToken}`;
     sendAjax('POST', '/getGalaxyBucks', data, (data) => {
+      socket.emit('getMyBankData');
       handleSuccess(data.message);
     });
   });
