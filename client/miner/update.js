@@ -1,5 +1,32 @@
 //The main update call which runs 60 times a second (ideally)
 const update = () => {
+   
+  //Update player position (skip lerping for player)
+  player.x = player.destX;
+  player.y = player.destY;
+  
+  //Update other players (lerp)
+  const playerKeys = Object.keys(players);
+  for(let i = 0; i < playerKeys.length; i++){
+    const ply = players[playerKeys[i]];
+    
+    ply.x = lerp(ply.prevX, ply.destX, ply.ratio);
+    ply.y = lerp(ply.prevY, ply.destY, ply.ratio);
+    
+    //Update lerping ratio
+    if(ply.ratio < 1){
+      ply.ratio += 0.05;
+    }
+  }
+  
+  //Send a player update
+  socket.emit('playerUpdate', { 
+    prevX: player.prevX,
+    prevY: player.prevY,
+    destX: player.destX,
+    destY: player.destY,
+    ratio: player.ratio,
+  });
   
   //Draw to the canvas (prep first, then display)
   if(showingAd){
@@ -25,16 +52,18 @@ const getMouse = (e) => {
 
 //Process a mouse click on the main display canvas
 const processClick = (e) => {
-  const mousePos = getMouse(e);
+  mousePos = getMouse(e);
   socket.emit('click', { mouse: mousePos });
 };
 
 //Process a mouse movement on the main display canvas
 const processMouseMove = (e) => {
-  const mousePos = getMouse(e);
-  player.x = mousePos.x;
-  player.y = mousePos.y;
-  socket.emit('playerUpdate', { x: mousePos.x, y: mousePos.y });
+  mousePos = getMouse(e);
+  player.prevX = player.x;
+  player.prevY = player.y;
+  player.destX = mousePos.x;
+  player.destY = mousePos.y;
+  player.ratio = 0.05;
 };
 
 //Process a mouse click confirmation from the server from a player
@@ -106,6 +135,11 @@ const setupPlayer = (data) => {
   hash = data.hash;
   
   player = {
+    prevX: -200,
+    prevY: -200,
+    destX: -200,
+    destY: -200,
+    ratio: 0.05,
     x: -200,
     y: -200,
     hash: data.hash,
@@ -134,8 +168,11 @@ const updatePlayer = (data) => {
     ply = players[data.hash];
   }
   
-  ply.x = data.x;
-  ply.y = data.y;
+  ply.prevX = data.prevX;
+  ply.prevY = data.prevY;
+  ply.destX = data.destX;
+  ply.destY = data.destY;
+  ply.ratio = data.ratio;
 }
 
 //Remove a player so that they aren't drawn and updated
@@ -155,6 +192,9 @@ const spawnAsteroid = (data) => {
   //Reset gamespace
   effectCircles = [];
   players = [];
+  subContract = null;
+  
+  renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
 
 //Process a request from the server to update the asteroid
@@ -166,6 +206,30 @@ const updateAsteroid = (data) => {
   asteroid.updateVals(data.asteroid);
   renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
+
+//Process a request from the server to update a sub contract
+const updateSubContract = (data) => {
+  if(!subContract){
+    subContract = {};
+  }
+  
+  //Update the client's sub contract info
+  const subKeys = Object.keys(data);
+  for(let i = 0; i < subKeys.length; i++){
+    const key = subKeys[i];
+    subContract[key] = data[key];
+  }
+  
+  //Update the progress panel
+  if(asteroid){
+    renderProgressPanel(asteroid.progress, asteroid.toughness);
+  }
+};
+
+//Process a request from the server to switch from a sub to a non sub contract
+const stopSub = () => {
+  subContract = null;
+}
 
 //Process a request from the server to update the player's account details
 const updateAccount = (data) => {

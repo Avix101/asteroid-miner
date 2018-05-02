@@ -162,10 +162,12 @@ const getPartnerContracts = (req, res) => {
 
 // Get contracts belonging to a user
 const getMyContracts = (req, res) =>
+  // Find contracts belonging to the user
   Contract.ContractModel.findContractsFor(req.session.account._id, (err, results) => {
     let contracts = null;
     let subContracts = null;
     let partnerContracts = null;
+    let ownedSubs = null;
     if (err) {
       return res.status(500).json({ error: 'Could not retrieve contracts' });
     }
@@ -178,6 +180,8 @@ const getMyContracts = (req, res) =>
         subContractors: contract.subContractors.length,
       }));
     }
+
+    // Find sub contracts
     return SubContract.SubContractModel.findSubContractsFor(
       req.session.account._id,
       (er2, res2) => {
@@ -196,16 +200,15 @@ const getMyContracts = (req, res) =>
           }));
         }
 
+        // Find partner contracts
         return PartnerContract.PartnerContractModel.findReadyPartnerContractsFor(
           req.session.account._id,
           (er3, res3) => {
             if (er3) {
-              console.log(er3);
               return res.status(500).json({ error: 'Could not retrieve contracts' });
             }
 
             if (res3) {
-              console.dir(res3);
               partnerContracts = res3.map(partnerContract => ({
                 partnerContractId: partnerContract._id,
                 owner: partnerContract.ownerId,
@@ -213,8 +216,29 @@ const getMyContracts = (req, res) =>
                 asteroid: Asteroid.getBundledDataFor(partnerContract.asteroid),
               }));
             }
-            console.dir(partnerContracts);
-            return res.status(200).json({ contracts, subContracts, partnerContracts });
+
+            return SubContract.SubContractModel.findSubContractsOwnedBy(
+              req.session.account._id,
+              (er4, res4) => {
+                if (er4) {
+                  return res.status(500).json({ error: 'Could not retrieve contracts' });
+                }
+
+                if (res4) {
+                  ownedSubs = res4.map(subContract => ({
+                    subContractId: subContract._id,
+                    progress: subContract.progress,
+                    clicks: subContract.clicks,
+                    asteroid: Asteroid.getBundledDataFor(subContract.asteroid),
+                    rewards: subContract.rewards,
+                  }));
+                }
+
+                return res.status(200).json({
+                  contracts, subContracts, partnerContracts, ownedSubs,
+                });
+              },
+            );
           },
         );
       },
@@ -228,10 +252,12 @@ const buyAsteroid = (request, response) => {
 
   req.body.ac = `${req.body.ac}`;
 
+  // Verify data
   if (!basicContracts[req.body.ac]) {
     return res.status(400).json({ error: 'Could not retrieve unknown standard contract' });
   }
 
+  // Find the user's account
   return Account.AccountModel.findById(req.session.account._id, (err, acc) => {
     if (err || !acc) {
       return res.status(400).json({ error: 'Could not find your account' });
@@ -239,6 +265,7 @@ const buyAsteroid = (request, response) => {
 
     const account = acc;
 
+    // Make sure they have enough to purchase
     if (account.bank.gb < basicContracts[req.body.ac].price) {
       return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
     }
@@ -248,6 +275,7 @@ const buyAsteroid = (request, response) => {
     account.markModified('bank');
     const accountSave = account.save();
 
+    // Save the account and create a new contract
     accountSave.then(() => {
       req.session.account = Account.AccountModel.toAPI(account);
 
@@ -390,6 +418,7 @@ const purchaseUpgrades = (request, response) => {
   });
 };
 
+// Join a contract as partner
 const joinContractAsPartner = (request, response) => {
   const req = request;
   const res = response;
@@ -406,11 +435,10 @@ const joinContractAsPartner = (request, response) => {
     req.session.account = Account.AccountModel.toAPI(account);
 
     return PartnerContract.PartnerContractModel
-      .addPartner(req.session.account._id, req.body.id, (error, obj) => {
+      .addPartner(req.session.account._id, req.body.id, (error) => {
         if (error) {
           return res.status(400).json({ error: 'Failed to Join' });
         }
-        console.log(obj);
         return res.status(201).json({ message: 'Contract successfully joined' });
       });
   });
@@ -434,8 +462,6 @@ const buyPartnerAsteroid = (request, response) => {
     }
 
     const account = acc;
-
-    console.log(account.bank);
 
     if (account.bank.gb < (basicContracts[req.body.ac].price / 4)) {
       return res.status(400).json({ error: 'You do not have enough Galaxy Bucks to buy that' });
@@ -583,6 +609,7 @@ const getHighscores = (req, res) => {
       return res.status(500).json({ error: 'Highscores could not be processed' });
     }
 
+    // Calculate player scores
     const playerData = [];
     for (let i = 0; i < accounts.length; i++) {
       const account = accounts[i];
@@ -603,6 +630,7 @@ const getHighscores = (req, res) => {
       playerData.push(data);
     }
 
+    // Sort the score list
     const scores = playerData.sort((dataA, dataB) => dataB.score - dataA.score);
 
     return res.status(200).json({ scores });

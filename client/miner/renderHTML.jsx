@@ -21,7 +21,7 @@ const ContractWindow = (props) => {
         
         <h2>Partner Contracts</h2>
         <p className="lead">Partner contracts are split into 25% shares (4 shares per asteroid) on purchase,
-        one of which belonging to the origial buyer. Costs and profits are split evenly between the owner and all partners.
+        one immediately belonging to the original buyer. Costs and profits are split evenly between the owner and all partners.
         If you wish to claim additional shares, accept the partner contract multiple times</p>
         <div id="partnerContracts"></div>
         <hr />
@@ -85,8 +85,8 @@ const MyContractsWindow = (props) => {
           <button onClick={renderSubContractModal}
             className="btn btn-lg btn-primary fullButton">Draft Sub Contract</button>
         </div>
-        <div id="mySubContracts"></div>
         <hr />
+        <div id="mySubContracts"></div>
       
       </div>
     </div>
@@ -206,6 +206,40 @@ const purchaseAsPartnerContract = (e) => {
   });
 }
 
+//Builds a list of owned sub contracts
+const MySubContracts = (props) => {
+  const subContracts = props.data.map((contract, index) => {
+    return (
+      <li className="list-group-item d-flex">
+        <div className="card border-info mb-3 contractCard">
+          <div className="card-header justify-content-center">
+            Asteroid Class: {contract.asteroid.classname.toUpperCase()}
+            
+            <div className="vAlign pillContainer">
+              <span className="badge badge-info badge-pill">#{index + 1}</span>
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="container">
+              <div className="row">
+                <div className="col-sm-12 text-center">
+                  <p className="card-text">Contract Progress: {contract.progress} / {contract.clicks}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  });
+  
+  return (
+    <ul className="list-group">
+      {subContracts}
+    </ul>
+  );
+};
+
 //Builds a list of contracts that the user owns
 const MyContracts = (props) => {
   console.dir(props.data);
@@ -225,7 +259,6 @@ const MyContracts = (props) => {
               <div className="row">
                 <div className="col-sm-12 text-center">
                   <p className="card-text">Contract Progress: {contract.progress} / {contract.clicks}</p>
-                  <p className="card-text">Asteroid Progress: {contract.asteroid.progress} / {contract.asteroid.toughness}</p>
                   <button data-contract-id={contract.subContractId} onClick={startSubMine}
                     className="btn btn-lg btn-info fullButton">Mine</button>
                 </div>
@@ -263,15 +296,16 @@ const MyContracts = (props) => {
       </li>
     );
   });
-    const partnerContracts = props.data.partnerContracts.map((contract, index) => {
+  
+  const partnerContracts = props.data.partnerContracts.map((contract, index) => {
     return (
       <li className="list-group-item d-flex">
-        <div className="card border-primary mb-3 contractCard">
+        <div className="card border-danger mb-3 contractCard">
           <div className="card-header justify-content-center">
             Asteroid Class: {contract.asteroid.classname.toUpperCase()}
             
             <div className="vAlign pillContainer">
-              <span className="badge badge-primary badge-pill">#{index + 1}</span>
+              <span className="badge badge-danger badge-pill">#{index + 1}</span>
             </div>
           </div>
           <div className="card-body">
@@ -280,7 +314,7 @@ const MyContracts = (props) => {
                 <div className="col-sm-12 text-center">
                   <p className="card-text">Progress: {contract.asteroid.progress} / {contract.asteroid.toughness}</p>
                   <button data-contract-id={contract.partnerContractId} onClick={startPartnerMine}
-                    className="btn btn-lg btn-primary fullButton">Mine</button>
+                    className="btn btn-lg btn-danger fullButton">Mine</button>
                 </div>
               </div>
             </div>
@@ -302,6 +336,7 @@ const MyContracts = (props) => {
 //Builds a list of basic contracts and ads them to the basic contracts section
 const BasicContracts = (props) => {
   
+  //List each basic contract and it's relevant details
   const contractKeys = Object.keys(props.contracts);
   const contracts = [];
   for(let i = 0; i < contractKeys.length; i++){
@@ -366,6 +401,7 @@ const BasicContracts = (props) => {
   );
 };
 
+//Construct a list of partner contracts
 const PartnerContracts = (props) => {
     console.log(props);
   const openContracts = props.contracts;    
@@ -377,9 +413,9 @@ const PartnerContracts = (props) => {
 
     contracts.push(
       <li className="list-group-item d-flex">
-        <div className="card border-primary mb-3 contractCard">
+        <div className="card border-danger mb-3 contractCard">
           <div className="card-header justify-content-center">
-            {contract.asteroid.name}
+            Asteroid Class: {contract.asteroid.classname.toUpperCase()}
           </div>
           <div className="card-body">
             <div className="container">
@@ -392,7 +428,7 @@ const PartnerContracts = (props) => {
                 <div className="col-sm-4 text-center justify-content-center vAlign">
                   <p className="contractButtonContainer">
                     <button data-contractID={contract._id} onClick={joinContractAsPartner}
-                      className="btn btn-lg btn-primary normalWhitespace">Join as Partner ({contract.price} GB)</button>
+                      className="btn btn-lg btn-danger normalWhitespace">Join as Partner ({contract.price} GB)</button>
                   </p>
                 </div>
               </div>
@@ -412,6 +448,7 @@ const PartnerContracts = (props) => {
   );
 };
 
+//Construct a list of sub contracts
 const SubContracts = (props) => {
   
   const contractKeys = Object.keys(props.contracts);
@@ -1216,6 +1253,7 @@ const AdModal = (props) => {
   
   let modalBody;
   
+  //Render the ad if requested
   if(props.render){
     const dimensions = calcDisplayDimensions();
     const ratio = Math.min(window.innerHeight * 0.5 / dimensions.height, 1);
@@ -1230,6 +1268,7 @@ const AdModal = (props) => {
     modalBody = <p>Loading Robo Corp&reg; Ad... <span className="fas fa-sync fa-spin"></span></p>;
   }
   
+  //When the add completes
   const completeAd = (e) => {
     hideModal(e);
     getGalaxyBucks(e);
@@ -1386,15 +1425,39 @@ const SubContractModal = (props) => {
   );
 };
 
+//Construct a panel that shows a user's mining progress
 const ProgressPanel = (props) => {
   
-  const progressWidth = {width: `${(props.current / props.total) * 100}%`};
+  //Render user's bank details if available
+  let userDetails;
+  if(account.bank){
+    userDetails = (
+      <div>
+        <h1>Account Info</h1>
+        <p className="lead">Miner ID: {username}</p>
+        <p classname="lead">Bank Details</p>
+        <ul>
+          <li><img width="25" height="25" src={gbIcon.src} alt="" /> GB: {account.bank.gb}</li>
+          <li><img width="25" height="25" src={ironIcon.src} alt="" /> Iron: {account.bank.iron}</li>
+          <li><img width="25" height="25" src={copperIcon.src} alt="" /> Copper: {account.bank.copper}</li>
+          <li><img width="25" height="25" src={sapphireIcon.src} alt="" /> Sapphires: {account.bank.sapphire}</li>
+          <li><img width="25" height="25" src={emeraldIcon.src} alt="" /> Emeralds: {account.bank.emerald}</li>
+          <li><img width="25" height="25" src={rubyIcon.src} alt="" /> Rubies: {account.bank.ruby}</li>
+          <li><img width="25" height="25" src={diamondIcon.src} alt="" /> Diamonds: {account.bank.diamond}</li>
+        </ul>
+        <hr />
+      </div>
+    );
+  }
   
-  return (
-    <div className="container">
-      <div className="jumbotron">
-        <h1>Progress</h1>
-        <hr className="my-4" />
+  //Render asteroid progress if applicable
+  let asteroidProgress;
+  let asteroidProgressWidth;
+  if(props.current && props.total){
+    asteroidProgressWidth = {width: `${(props.current / props.total) * 100}%`};
+    asteroidProgress = (
+      <div>
+        <h1>Asteroid Progress</h1>
         <p className="lead">Clicks: {props.current}/{props.total}</p>
         <div className="progress bg-light">
           <div className="progress-bar progress-bar-striped progress-bar-animated bg-success"
@@ -1402,9 +1465,43 @@ const ProgressPanel = (props) => {
             aria-value={props.current}
             aria-valuemin="0"
             aria-valuemax={props.total}
-            style={progressWidth}
+            style={asteroidProgressWidth}
           ></div>
         </div>
+        <hr />
+      </div>
+    );
+  }
+  
+  //Render sub contract progress if applicable
+  let subContractProgress;
+  let subContractProgressWidth;
+  if(props.sub){
+    subContractProgressWidth = {width: `${(props.sub.progress / props.sub.clicks) * 100}%`};
+    subContractProgress = (
+      <div>
+        <h1>Sub Contract</h1>
+        <p className="lead">Clicks: {props.sub.progress}/{props.sub.clicks}</p>
+        <div className="progress bg-light">
+          <div className="progress-bar progress-bar-striped progress-bar-animated bg-info"
+            role="progressbar"
+            aria-value={props.sub.progress}
+            aria-valuemin="0"
+            aria-valuemax={props.sub.clicks}
+            style={subContractProgressWidth}
+          ></div>
+        </div>
+        <hr />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="container">
+      <div className="jumbotron">
+        {userDetails}
+        {asteroidProgress}
+        {subContractProgress}
       </div>
     </div>
   );
@@ -1524,7 +1621,7 @@ const renderPayToWin = () => {
 //Render the asteroid's progress panel
 const renderProgressPanel = (current, total) => {
   ReactDOM.render(
-    <ProgressPanel current={current} total={total} />,
+    <ProgressPanel sub={subContract} current={current} total={total} />,
     document.querySelector("#rightPanel")
   );
 };
@@ -1565,6 +1662,14 @@ const populateMyContractsWindow = (data) => {
   );
 };
 
+//Populate owned sub contracts for owner to view progress
+const populateMySubContractsWindow = (data) => {
+  ReactDOM.render(
+    <MySubContracts data={data} />,
+    document.querySelector("#mySubContracts")
+  );
+};
+
 //Render the 'MyContracts' side panel
 let availableContracts = [];
 const renderMyContractsPanel = () => {
@@ -1575,7 +1680,9 @@ const renderMyContractsPanel = () => {
   
   sendAjax('GET', '/getMyContracts', null, (result) => {
     availableContracts = result.contracts;
+    console.log(result);
     populateMyContractsWindow(result);
+    populateMySubContractsWindow(result.ownedSubs);
   });
 };
 

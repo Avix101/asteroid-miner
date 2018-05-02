@@ -46,6 +46,8 @@ let player = {
   color: { r: 0, g: 0, b: 0},
 };
 let players = {};
+let subContract;
+let mousePos = { x: -200, y: -200 };
 
 //Current view
 let pageView;
@@ -81,6 +83,14 @@ const loadView = () => {
   
   //Render my contracts panel
   renderMyContractsPanel();
+  
+  //Render progress / info panel
+  if(asteroid){
+    renderProgressPanel(asteroid.progress, asteroid.toughness);
+  } else {
+    renderProgressPanel();
+  }
+  
   
   //Depending on the hash, render the main content
   switch(hash){
@@ -162,6 +172,8 @@ const init = () => {
   socket.on('spawnAsteroid', spawnAsteroid);
   socket.on('click', processPlayerClick);
   socket.on('asteroidUpdate', updateAsteroid);
+  socket.on('subContractUpdate', updateSubContract);
+  socket.on('noSub', stopSub);
   socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);
   socket.on('errorMessage', processSocketError);

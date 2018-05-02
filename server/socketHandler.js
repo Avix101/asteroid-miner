@@ -47,15 +47,15 @@ const joinGame = (sock, id) => {
         return;
       }
 
+      // Avoid rapidly jumping into the same room
+      if (socket.roomJoined.toString() === id.toString()) {
+        return;
+      }
+
       // Alert the users in the previous room (if there is one)
       // that the player just left
       if (socket.roomJoined) {
         io.sockets.in(socket.roomJoined).emit('playerLeave', { hash: socket.hash });
-      }
-
-      // Avoid rapidly jumping into the same room
-      if (socket.roomJoined === id) {
-        return;
       }
 
       // Have the socket join the new gameroom
@@ -66,20 +66,24 @@ const joinGame = (sock, id) => {
       miner.game.createGame(id);
       miner.game.generateAsteroid(id, contract, (asteroid) => {
         io.sockets.in(id).emit('spawnAsteroid', { asteroid });
+
+        if (socket.sub) {
+          socket.emit('subContractUpdate', { progress: socket.sub.progress, clicks: socket.sub.clicks });
+        }
       });
     });
   } else {
     const asteroid = miner.game.getAsteroid(id);
 
+    // Avoid rapidly jumping into the same room
+    if (socket.roomJoined.toString() === id.toString()) {
+      return;
+    }
+
     // Alert the users in the previous room (if there is one)
     // that the player just left
     if (socket.roomJoined) {
       io.sockets.in(socket.roomJoined).emit('playerLeave', { hash: socket.hash });
-    }
-
-    // Avoid rapidly jumping into the same room
-    if (socket.roomJoined === id) {
-      return;
     }
 
     // Have the socket join the new gameroom
@@ -88,6 +92,10 @@ const joinGame = (sock, id) => {
     socket.roomJoined = id;
 
     socket.emit('spawnAsteroid', { asteroid });
+
+    if (socket.sub) {
+      socket.emit('subContractUpdate', { progress: socket.sub.progress, clicks: socket.sub.clicks });
+    }
   }
 };
 
@@ -101,6 +109,17 @@ const joinPartnerGame = (sock, id) => {
         return;
       }
 
+      // Avoid rapidly jumping into the same room
+      if (socket.roomJoined.toString() === id.toString()) {
+        return;
+      }
+
+      // Alert the users in the previous room (if there is one)
+      // that the player just left
+      if (socket.roomJoined) {
+        io.sockets.in(socket.roomJoined).emit('playerLeave', { hash: socket.hash });
+      }
+
       // Have the socket join the new gameroom
       socket.leave(socket.roomJoined);
       socket.join(id);
@@ -113,6 +132,17 @@ const joinPartnerGame = (sock, id) => {
     });
   } else {
     const asteroid = miner.game.getAsteroid(id);
+
+    // Avoid rapidly jumping into the same room
+    if (socket.roomJoined.toString() === id.toString()) {
+      return;
+    }
+
+    // Alert the users in the previous room (if there is one)
+    // that the player just left
+    if (socket.roomJoined) {
+      io.sockets.in(socket.roomJoined).emit('playerLeave', { hash: socket.hash });
+    }
 
     socket.leave(socket.roomJoined);
     socket.join(id);
@@ -149,23 +179,17 @@ const init = (ioInstance) => {
       color,
     });
 
-    // If the the game room doesn't exist, create it.
-    // Otherwise send the current asteroid to the player
-    /* if (!miner.game.hasGame('lobby')) {
-      miner.game.createGame('lobby');
-      miner.game.generateAsteroid('lobby', (asteroid) => {
-        io.sockets.in('lobby').emit('spawnAsteroid', { asteroid });
-      });
-    } else {
-      const asteroid = miner.game.getAsteroid('lobby');
-      socket.emit('spawnAsteroid', { asteroid });
-    } */
-
     // Process a request to start mining
     socket.on('mine', (data) => {
       // Ensure the integrity of data sent via sockets
       if (!verifyDataIntegrity(data, ['contractId'])) {
         return;
+      }
+
+      // Make sure users stop working on their subcontract
+      if (socket.sub) {
+        socket.sub = null;
+        socket.emit('noSub');
       }
 
       const id = data.contractId;
@@ -186,10 +210,18 @@ const init = (ioInstance) => {
         }
 
         if (subContract.subContractorId.toString()
-          !== socket.handshake.session.account._id
+          !== socket.handshake.session.account._id.toString()
         ) {
           socket.emit('errorMessage', { error: 'You do not own that sub contract' });
           return;
+        }
+
+        // If the socket switches from a non sub to a sub (same asteroid)
+        if (!socket.sub && subContract.contractId.toString() === socket.roomJoined.toString()) {
+          socket.emit('subContractUpdate', {
+            progress: subContract.progress,
+            clicks: subContract.clicks,
+          });
         }
 
         socket.sub = subContract;
@@ -200,6 +232,11 @@ const init = (ioInstance) => {
     socket.on('minePartner', (data) => {
       if (!verifyDataIntegrity(data, ['partnerContractId'])) {
         return;
+      }
+
+      // Make sure users stop working on their subcontract
+      if (socket.sub) {
+        socket.sub = null;
       }
 
       const partnerId = data.partnerContractId;
@@ -242,6 +279,7 @@ const init = (ioInstance) => {
               return;
             }
 
+            // Credit them with their due resources
             const account = acc;
             account.bank.gb += socket.sub.rewards.gb;
             account.bank.iron += socket.sub.rewards.iron;
@@ -265,19 +303,25 @@ const init = (ioInstance) => {
         } else {
           socket.sub.save();
         }
+
+        // Update the client's sub contract progress
+        socket.emit('subContractUpdate', { progress: socket.sub.progress, clicks: socket.sub.clicks });
       }
     });
 
     // Process a request for a player to update their position
     socket.on('playerUpdate', (data) => {
-      if (!verifyDataIntegrity(data, ['x', 'y'])) {
+      if (!verifyDataIntegrity(data, ['prevX', 'prevY', 'destX', 'destY', 'ratio'])) {
         return;
       }
 
       const playerData = {
         hash: socket.hash,
-        x: data.x,
-        y: data.y,
+        prevX: data.prevX,
+        prevY: data.prevY,
+        destX: data.destX,
+        destY: data.destY,
+        ratio: data.ratio,
         color: socket.color,
       };
       socket.to(socket.roomJoined).emit('playerUpdate', playerData);

@@ -685,6 +685,8 @@ var player = {
   color: { r: 0, g: 0, b: 0 }
 };
 var players = {};
+var subContract = void 0;
+var mousePos = { x: -200, y: -200 };
 
 //Current view
 var pageView = void 0;
@@ -720,6 +722,13 @@ var loadView = function loadView() {
 
   //Render my contracts panel
   renderMyContractsPanel();
+
+  //Render progress / info panel
+  if (asteroid) {
+    renderProgressPanel(asteroid.progress, asteroid.toughness);
+  } else {
+    renderProgressPanel();
+  }
 
   //Depending on the hash, render the main content
   switch (hash) {
@@ -809,6 +818,8 @@ var init = function init() {
   socket.on('spawnAsteroid', spawnAsteroid);
   socket.on('click', processPlayerClick);
   socket.on('asteroidUpdate', updateAsteroid);
+  socket.on('subContractUpdate', updateSubContract);
+  socket.on('noSub', stopSub);
   socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);
   socket.on('errorMessage', processSocketError);
@@ -874,7 +885,7 @@ var ContractWindow = function ContractWindow(props) {
       React.createElement(
         "p",
         { className: "lead" },
-        "Partner contracts are split into 25% shares (4 shares per asteroid) on purchase, one of which belonging to the origial buyer. Costs and profits are split evenly between the owner and all partners. If you wish to claim additional shares, accept the partner contract multiple times"
+        "Partner contracts are split into 25% shares (4 shares per asteroid) on purchase, one immediately belonging to the original buyer. Costs and profits are split evenly between the owner and all partners. If you wish to claim additional shares, accept the partner contract multiple times"
       ),
       React.createElement("div", { id: "partnerContracts" }),
       React.createElement("hr", null),
@@ -968,8 +979,8 @@ var MyContractsWindow = function MyContractsWindow(props) {
           "Draft Sub Contract"
         )
       ),
-      React.createElement("div", { id: "mySubContracts" }),
-      React.createElement("hr", null)
+      React.createElement("hr", null),
+      React.createElement("div", { id: "mySubContracts" })
     )
   );
 };
@@ -1060,6 +1071,7 @@ var handleMarketSubmit = function handleMarketSubmit(e) {
   return false;
 };
 
+// Handles a request to buy an upgrade
 var handlePurchase = function handlePurchase(power) {
   sendAjax('POST', $("#upgradeForm" + power).attr("action"), $("#upgradeForm" + power).serialize(), function (data) {
     handleSuccess(data.message);
@@ -1084,6 +1096,66 @@ var purchaseAsPartnerContract = function purchaseAsPartnerContract(e) {
       renderContracts();
     });
   });
+};
+
+//Builds a list of owned sub contracts
+var MySubContracts = function MySubContracts(props) {
+  var subContracts = props.data.map(function (contract, index) {
+    return React.createElement(
+      "li",
+      { className: "list-group-item d-flex" },
+      React.createElement(
+        "div",
+        { className: "card border-info mb-3 contractCard" },
+        React.createElement(
+          "div",
+          { className: "card-header justify-content-center" },
+          "Asteroid Class: ",
+          contract.asteroid.classname.toUpperCase(),
+          React.createElement(
+            "div",
+            { className: "vAlign pillContainer" },
+            React.createElement(
+              "span",
+              { className: "badge badge-info badge-pill" },
+              "#",
+              index + 1
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "card-body" },
+          React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement(
+              "div",
+              { className: "row" },
+              React.createElement(
+                "div",
+                { className: "col-sm-12 text-center" },
+                React.createElement(
+                  "p",
+                  { className: "card-text" },
+                  "Contract Progress: ",
+                  contract.progress,
+                  " / ",
+                  contract.clicks
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+  });
+
+  return React.createElement(
+    "ul",
+    { className: "list-group" },
+    subContracts
+  );
 };
 
 //Builds a list of contracts that the user owns
@@ -1131,14 +1203,6 @@ var MyContracts = function MyContracts(props) {
                   contract.progress,
                   " / ",
                   contract.clicks
-                ),
-                React.createElement(
-                  "p",
-                  { className: "card-text" },
-                  "Asteroid Progress: ",
-                  contract.asteroid.progress,
-                  " / ",
-                  contract.asteroid.toughness
                 ),
                 React.createElement(
                   "button",
@@ -1210,13 +1274,14 @@ var MyContracts = function MyContracts(props) {
       )
     );
   });
+
   var partnerContracts = props.data.partnerContracts.map(function (contract, index) {
     return React.createElement(
       "li",
       { className: "list-group-item d-flex" },
       React.createElement(
         "div",
-        { className: "card border-primary mb-3 contractCard" },
+        { className: "card border-danger mb-3 contractCard" },
         React.createElement(
           "div",
           { className: "card-header justify-content-center" },
@@ -1227,7 +1292,7 @@ var MyContracts = function MyContracts(props) {
             { className: "vAlign pillContainer" },
             React.createElement(
               "span",
-              { className: "badge badge-primary badge-pill" },
+              { className: "badge badge-danger badge-pill" },
               "#",
               index + 1
             )
@@ -1256,7 +1321,7 @@ var MyContracts = function MyContracts(props) {
                 React.createElement(
                   "button",
                   { "data-contract-id": contract.partnerContractId, onClick: startPartnerMine,
-                    className: "btn btn-lg btn-primary fullButton" },
+                    className: "btn btn-lg btn-danger fullButton" },
                   "Mine"
                 )
               )
@@ -1279,6 +1344,7 @@ var MyContracts = function MyContracts(props) {
 //Builds a list of basic contracts and ads them to the basic contracts section
 var BasicContracts = function BasicContracts(props) {
 
+  //List each basic contract and it's relevant details
   var contractKeys = Object.keys(props.contracts);
   var contracts = [];
   for (var i = 0; i < contractKeys.length; i++) {
@@ -1404,6 +1470,7 @@ var BasicContracts = function BasicContracts(props) {
   );
 };
 
+//Construct a list of partner contracts
 var PartnerContracts = function PartnerContracts(props) {
   console.log(props);
   var openContracts = props.contracts;
@@ -1418,11 +1485,12 @@ var PartnerContracts = function PartnerContracts(props) {
       { className: "list-group-item d-flex" },
       React.createElement(
         "div",
-        { className: "card border-primary mb-3 contractCard" },
+        { className: "card border-danger mb-3 contractCard" },
         React.createElement(
           "div",
           { className: "card-header justify-content-center" },
-          contract.asteroid.name
+          "Asteroid Class: ",
+          contract.asteroid.classname.toUpperCase()
         ),
         React.createElement(
           "div",
@@ -1462,7 +1530,7 @@ var PartnerContracts = function PartnerContracts(props) {
                   React.createElement(
                     "button",
                     { "data-contractID": contract._id, onClick: joinContractAsPartner,
-                      className: "btn btn-lg btn-primary normalWhitespace" },
+                      className: "btn btn-lg btn-danger normalWhitespace" },
                     "Join as Partner (",
                     contract.price,
                     " GB)"
@@ -1487,6 +1555,7 @@ var PartnerContracts = function PartnerContracts(props) {
   );
 };
 
+//Construct a list of sub contracts
 var SubContracts = function SubContracts(props) {
 
   var contractKeys = Object.keys(props.contracts);
@@ -3145,6 +3214,7 @@ var AdModal = function AdModal(props) {
 
   var modalBody = void 0;
 
+  //Render the ad if requested
   if (props.render) {
     var dimensions = calcDisplayDimensions();
     var ratio = Math.min(window.innerHeight * 0.5 / dimensions.height, 1);
@@ -3164,6 +3234,7 @@ var AdModal = function AdModal(props) {
     );
   }
 
+  //When the add completes
   var completeAd = function completeAd(e) {
     hideModal(e);
     getGalaxyBucks(e);
@@ -3468,22 +3539,101 @@ var SubContractModal = function SubContractModal(props) {
   );
 };
 
+//Construct a panel that shows a user's mining progress
 var ProgressPanel = function ProgressPanel(props) {
 
-  var progressWidth = { width: props.current / props.total * 100 + "%" };
-
-  return React.createElement(
-    "div",
-    { className: "container" },
-    React.createElement(
+  //Render user's bank details if available
+  var userDetails = void 0;
+  if (account.bank) {
+    userDetails = React.createElement(
       "div",
-      { className: "jumbotron" },
+      null,
       React.createElement(
         "h1",
         null,
-        "Progress"
+        "Account Info"
       ),
-      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Miner ID: ",
+        username
+      ),
+      React.createElement(
+        "p",
+        { classname: "lead" },
+        "Bank Details"
+      ),
+      React.createElement(
+        "ul",
+        null,
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: gbIcon.src, alt: "" }),
+          " GB: ",
+          account.bank.gb
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+          " Iron: ",
+          account.bank.iron
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+          " Copper: ",
+          account.bank.copper
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+          " Sapphires: ",
+          account.bank.sapphire
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+          " Emeralds: ",
+          account.bank.emerald
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+          " Rubies: ",
+          account.bank.ruby
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+          " Diamonds: ",
+          account.bank.diamond
+        )
+      ),
+      React.createElement("hr", null)
+    );
+  }
+
+  //Render asteroid progress if applicable
+  var asteroidProgress = void 0;
+  var asteroidProgressWidth = void 0;
+  if (props.current && props.total) {
+    asteroidProgressWidth = { width: props.current / props.total * 100 + "%" };
+    asteroidProgress = React.createElement(
+      "div",
+      null,
+      React.createElement(
+        "h1",
+        null,
+        "Asteroid Progress"
+      ),
       React.createElement(
         "p",
         { className: "lead" },
@@ -3500,9 +3650,58 @@ var ProgressPanel = function ProgressPanel(props) {
           "aria-value": props.current,
           "aria-valuemin": "0",
           "aria-valuemax": props.total,
-          style: progressWidth
+          style: asteroidProgressWidth
         })
-      )
+      ),
+      React.createElement("hr", null)
+    );
+  }
+
+  //Render sub contract progress if applicable
+  var subContractProgress = void 0;
+  var subContractProgressWidth = void 0;
+  if (props.sub) {
+    subContractProgressWidth = { width: props.sub.progress / props.sub.clicks * 100 + "%" };
+    subContractProgress = React.createElement(
+      "div",
+      null,
+      React.createElement(
+        "h1",
+        null,
+        "Sub Contract"
+      ),
+      React.createElement(
+        "p",
+        { className: "lead" },
+        "Clicks: ",
+        props.sub.progress,
+        "/",
+        props.sub.clicks
+      ),
+      React.createElement(
+        "div",
+        { className: "progress bg-light" },
+        React.createElement("div", { className: "progress-bar progress-bar-striped progress-bar-animated bg-info",
+          role: "progressbar",
+          "aria-value": props.sub.progress,
+          "aria-valuemin": "0",
+          "aria-valuemax": props.sub.clicks,
+          style: subContractProgressWidth
+        })
+      ),
+      React.createElement("hr", null)
+    );
+  }
+
+  return React.createElement(
+    "div",
+    { className: "container" },
+    React.createElement(
+      "div",
+      { className: "jumbotron" },
+      userDetails,
+      asteroidProgress,
+      subContractProgress
     )
   );
 };
@@ -3607,7 +3806,7 @@ var renderPayToWin = function renderPayToWin() {
 
 //Render the asteroid's progress panel
 var renderProgressPanel = function renderProgressPanel(current, total) {
-  ReactDOM.render(React.createElement(ProgressPanel, { current: current, total: total }), document.querySelector("#rightPanel"));
+  ReactDOM.render(React.createElement(ProgressPanel, { sub: subContract, current: current, total: total }), document.querySelector("#rightPanel"));
 };
 
 //Populate contract window with returned contracts
@@ -3634,6 +3833,11 @@ var populateMyContractsWindow = function populateMyContractsWindow(data) {
   ReactDOM.render(React.createElement(MyContracts, { data: data }), document.querySelector("#myContracts"));
 };
 
+//Populate owned sub contracts for owner to view progress
+var populateMySubContractsWindow = function populateMySubContractsWindow(data) {
+  ReactDOM.render(React.createElement(MySubContracts, { data: data }), document.querySelector("#mySubContracts"));
+};
+
 //Render the 'MyContracts' side panel
 var availableContracts = [];
 var renderMyContractsPanel = function renderMyContractsPanel() {
@@ -3641,7 +3845,9 @@ var renderMyContractsPanel = function renderMyContractsPanel() {
 
   sendAjax('GET', '/getMyContracts', null, function (result) {
     availableContracts = result.contracts;
+    console.log(result);
     populateMyContractsWindow(result);
+    populateMySubContractsWindow(result.ownedSubs);
   });
 };
 
@@ -3715,6 +3921,33 @@ var getTokenWithCallback = function getTokenWithCallback(callback) {
 //The main update call which runs 60 times a second (ideally)
 var update = function update() {
 
+  //Update player position (skip lerping for player)
+  player.x = player.destX;
+  player.y = player.destY;
+
+  //Update other players (lerp)
+  var playerKeys = Object.keys(players);
+  for (var i = 0; i < playerKeys.length; i++) {
+    var ply = players[playerKeys[i]];
+
+    ply.x = lerp(ply.prevX, ply.destX, ply.ratio);
+    ply.y = lerp(ply.prevY, ply.destY, ply.ratio);
+
+    //Update lerping ratio
+    if (ply.ratio < 1) {
+      ply.ratio += 0.05;
+    }
+  }
+
+  //Send a player update
+  socket.emit('playerUpdate', {
+    prevX: player.prevX,
+    prevY: player.prevY,
+    destX: player.destX,
+    destY: player.destY,
+    ratio: player.ratio
+  });
+
   //Draw to the canvas (prep first, then display)
   if (showingAd) {
     drawAd();
@@ -3739,16 +3972,18 @@ var getMouse = function getMouse(e) {
 
 //Process a mouse click on the main display canvas
 var processClick = function processClick(e) {
-  var mousePos = getMouse(e);
+  mousePos = getMouse(e);
   socket.emit('click', { mouse: mousePos });
 };
 
 //Process a mouse movement on the main display canvas
 var processMouseMove = function processMouseMove(e) {
-  var mousePos = getMouse(e);
-  player.x = mousePos.x;
-  player.y = mousePos.y;
-  socket.emit('playerUpdate', { x: mousePos.x, y: mousePos.y });
+  mousePos = getMouse(e);
+  player.prevX = player.x;
+  player.prevY = player.y;
+  player.destX = mousePos.x;
+  player.destY = mousePos.y;
+  player.ratio = 0.05;
 };
 
 //Process a mouse click confirmation from the server from a player
@@ -3820,6 +4055,11 @@ var setupPlayer = function setupPlayer(data) {
   hash = data.hash;
 
   player = {
+    prevX: -200,
+    prevY: -200,
+    destX: -200,
+    destY: -200,
+    ratio: 0.05,
     x: -200,
     y: -200,
     hash: data.hash,
@@ -3848,8 +4088,11 @@ var updatePlayer = function updatePlayer(data) {
     ply = players[data.hash];
   }
 
-  ply.x = data.x;
-  ply.y = data.y;
+  ply.prevX = data.prevX;
+  ply.prevY = data.prevY;
+  ply.destX = data.destX;
+  ply.destY = data.destY;
+  ply.ratio = data.ratio;
 };
 
 //Remove a player so that they aren't drawn and updated
@@ -3869,6 +4112,9 @@ var spawnAsteroid = function spawnAsteroid(data) {
   //Reset gamespace
   effectCircles = [];
   players = [];
+  subContract = null;
+
+  renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
 
 //Process a request from the server to update the asteroid
@@ -3879,6 +4125,30 @@ var updateAsteroid = function updateAsteroid(data) {
 
   asteroid.updateVals(data.asteroid);
   renderProgressPanel(asteroid.progress, asteroid.toughness);
+};
+
+//Process a request from the server to update a sub contract
+var updateSubContract = function updateSubContract(data) {
+  if (!subContract) {
+    subContract = {};
+  }
+
+  //Update the client's sub contract info
+  var subKeys = Object.keys(data);
+  for (var i = 0; i < subKeys.length; i++) {
+    var key = subKeys[i];
+    subContract[key] = data[key];
+  }
+
+  //Update the progress panel
+  if (asteroid) {
+    renderProgressPanel(asteroid.progress, asteroid.toughness);
+  }
+};
+
+//Process a request from the server to switch from a sub to a non sub contract
+var stopSub = function stopSub() {
+  subContract = null;
 };
 
 //Process a request from the server to update the player's account details
