@@ -83,6 +83,7 @@ const drawPick = (context, ply) => {
 const drawAndUpdateEffectCircles = (context) => {
   context.save();
   
+  //Iterate over each effect circle and update / draw
   for(let i = 0; i < effectCircles.length; i++){
     const circle = effectCircles[i];
     
@@ -92,7 +93,7 @@ const drawAndUpdateEffectCircles = (context) => {
     context.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
     context.stroke();
     
-    circle.radius += 2;
+    circle.radius += circle.speed;
     circle.lineWidth -= 0.3;
     
     if(circle.lineWidth <= 0){
@@ -102,6 +103,61 @@ const drawAndUpdateEffectCircles = (context) => {
   }
   
   context.restore();
+};
+
+//Call to draw and update gems if there are any
+const drawAndUpdateGems = (cvs, context) => {
+  //Iterate over each gem
+  for(let i = 0; i < gems.length; i++){
+    const gem = gems[i];
+    
+    //Update the gem's position
+    gem.x += gem.vector.x;
+    gem.y += gem.vector.y;
+    
+    //Slow the gem down
+    gem.vector = {
+      x: gem.vector.x * 0.98,
+      y: gem.vector.y * 0.98,
+    };
+    
+    //Rotate the gem
+    gem.displayAngle += gem.angleSpeed; 
+  
+    //Keep the gem within the bounds of the canvas
+    if(gem.x < 50){
+      gem.vector.x *= -1;
+      gem.x = 50;
+    } else if(gem.x > cvs.width - 50){
+      gem.vector.x *= -1;
+      gem.x = cvs.width - 50;
+    }
+    
+    if(gem.y < 50){
+      gem.vector.y *= -1;
+      gem.y = 50;
+    } else if(gem.y > cvs.height - 50){
+      gem.vector.y *= -1;
+      gem.y = cvs.height - 50;
+    }
+    
+    //Draw the gem
+    context.save();
+    context.translate(gem.x - 25, gem.y - 25);
+    context.rotate(gem.displayAngle);
+    context.drawImage(
+      gem.image,
+      0,
+      0,
+      gem.image.width,
+      gem.image.height,
+      -25,
+      -25,
+      50,
+      50
+    );
+    context.restore();
+  }
 };
 
 //The main call to draw everything to the prep canvas
@@ -121,6 +177,9 @@ const draw = () => {
   
   //Draw and update the asteroid
   drawAndUpdateAsteroid();
+  
+  //Draw and update gems
+  drawAndUpdateGems(prepCanvas, prepCtx);
   
   //Draw all players' picks
   drawPick(prepCtx, player);

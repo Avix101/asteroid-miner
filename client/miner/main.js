@@ -12,6 +12,7 @@ let adAudio;
 
 //Static image files
 let pickIcon;
+let rubbleIcon;
 let galaxyBg;
 let gbIcon;
 let ironIcon;
@@ -40,6 +41,7 @@ let animationFrame;
 
 //Variables relating to gamestate
 let asteroid;
+let gems = [];
 let player = {
   x: -200,
   y: -200,
@@ -145,6 +147,7 @@ const init = () => {
   
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
+  rubbleIcon = document.querySelector("#rubbleIcon");
   galaxyBg = document.querySelector("#galaxyBg");
   gbIcon = document.querySelector("#gbIcon");
   ironIcon = document.querySelector("#ironIcon");

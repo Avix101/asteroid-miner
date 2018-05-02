@@ -88,6 +88,7 @@ const processPlayerClick = (data) => {
     r: ply.color.r,
     g: ply.color.g,
     b: ply.color.b,
+    speed: 2,
     radius: 0,
     lineWidth: 20,
   }
@@ -192,6 +193,7 @@ const spawnAsteroid = (data) => {
   //Reset gamespace
   effectCircles = [];
   players = [];
+  gems = [];
   subContract = null;
   
   account.rewards = null;
@@ -231,10 +233,87 @@ const updateSubContract = (data) => {
 
 //Process a request from the server to finish an asteroid
 const finishAsteroid = (data) => {
-  asteroid = null;
-  
   account.rewards = data.rewards;
   socket.emit('getMyBankData');
+  
+  data.rewards["rubble"] = 50;
+  
+  //Create a massive effect circle and add it to the array (to be drawn and updated)
+  const newEffectCircle = {
+    x: prepCanvas.width / 2,
+    y: prepCanvas.height / 2,
+    r: 244,
+    g: 235,
+    b: 66,
+    speed: 20,
+    radius: 0,
+    lineWidth: 40,
+  }
+  
+  effectCircles.push(newEffectCircle);
+  
+  //Construct reward objects for entertainment purposes!
+  const rewardKeys = Object.keys(data.rewards);
+  for(let i = 0; i < rewardKeys.length; i++){
+    const key = rewardKeys[i];
+    let numberRewards = Math.min(data.rewards[key], 500);
+    let image;
+    
+    //Select the correct image
+    switch(key){
+      case "iron":
+        image = ironIcon;
+        break;
+      case "copper":
+        image = copperIcon;
+        break;
+      case "sapphire":
+        image = sapphireIcon;
+        break;
+      case "emerald":
+        image = emeraldIcon;
+        break;
+      case "ruby":
+        image = rubyIcon;
+        break;
+      case "diamond":
+        image = diamondIcon;
+        break;
+      default:
+        image = asteroid.image;
+        break;
+    }
+    
+    //Make the specified number of 'gems'
+    for(let j = 0; j < numberRewards; j++){
+      
+      //Give the gem a random velocity
+      const randAngle = Math.random() * 360;
+      const radian = (randAngle * Math.PI) / 180;
+      const displayAngle = 0;
+      const angleSpeed = Math.random() * 0.03;
+      const speed = 20 * Math.random() + 2;
+      const vector = {
+        x: Math.sin(radian) * speed,
+        y: Math.cos(radian) * speed,
+      };
+      
+      const gem = {
+        image,
+        x: prepCanvas.width / 2,
+        y: prepCanvas.height / 2,
+        radian,
+        speed,
+        vector,
+        displayAngle,
+        angleSpeed,
+      }
+      
+      gems.push(gem);
+    }
+  }
+  
+  asteroid = null;
 };
 
 //Process a request from the server to finish a sub contract

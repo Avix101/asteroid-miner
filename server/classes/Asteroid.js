@@ -66,10 +66,10 @@ class Asteroid {
   // Get the asteroid's position (this is just guesswork- implement something better)
   static getBoundingRect() {
     return {
-      x: 660,
-      y: 240,
-      width: 600,
-      height: 600,
+      x: 400,
+      y: 100,
+      width: 1120,
+      height: 880,
     };
   }
 

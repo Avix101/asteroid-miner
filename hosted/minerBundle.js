@@ -549,6 +549,7 @@ var drawPick = function drawPick(context, ply) {
 var drawAndUpdateEffectCircles = function drawAndUpdateEffectCircles(context) {
   context.save();
 
+  //Iterate over each effect circle and update / draw
   for (var i = 0; i < effectCircles.length; i++) {
     var circle = effectCircles[i];
 
@@ -558,7 +559,7 @@ var drawAndUpdateEffectCircles = function drawAndUpdateEffectCircles(context) {
     context.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
     context.stroke();
 
-    circle.radius += 2;
+    circle.radius += circle.speed;
     circle.lineWidth -= 0.3;
 
     if (circle.lineWidth <= 0) {
@@ -568,6 +569,51 @@ var drawAndUpdateEffectCircles = function drawAndUpdateEffectCircles(context) {
   }
 
   context.restore();
+};
+
+//Call to draw and update gems if there are any
+var drawAndUpdateGems = function drawAndUpdateGems(cvs, context) {
+  //Iterate over each gem
+  for (var i = 0; i < gems.length; i++) {
+    var gem = gems[i];
+
+    //Update the gem's position
+    gem.x += gem.vector.x;
+    gem.y += gem.vector.y;
+
+    //Slow the gem down
+    gem.vector = {
+      x: gem.vector.x * 0.98,
+      y: gem.vector.y * 0.98
+    };
+
+    //Rotate the gem
+    gem.displayAngle += gem.angleSpeed;
+
+    //Keep the gem within the bounds of the canvas
+    if (gem.x < 50) {
+      gem.vector.x *= -1;
+      gem.x = 50;
+    } else if (gem.x > cvs.width - 50) {
+      gem.vector.x *= -1;
+      gem.x = cvs.width - 50;
+    }
+
+    if (gem.y < 50) {
+      gem.vector.y *= -1;
+      gem.y = 50;
+    } else if (gem.y > cvs.height - 50) {
+      gem.vector.y *= -1;
+      gem.y = cvs.height - 50;
+    }
+
+    //Draw the gem
+    context.save();
+    context.translate(gem.x - 25, gem.y - 25);
+    context.rotate(gem.displayAngle);
+    context.drawImage(gem.image, 0, 0, gem.image.width, gem.image.height, -25, -25, 50, 50);
+    context.restore();
+  }
 };
 
 //The main call to draw everything to the prep canvas
@@ -587,6 +633,9 @@ var draw = function draw() {
 
   //Draw and update the asteroid
   drawAndUpdateAsteroid();
+
+  //Draw and update gems
+  drawAndUpdateGems(prepCanvas, prepCtx);
 
   //Draw all players' picks
   drawPick(prepCtx, player);
@@ -650,6 +699,7 @@ var adAudio = void 0;
 
 //Static image files
 var pickIcon = void 0;
+var rubbleIcon = void 0;
 var galaxyBg = void 0;
 var gbIcon = void 0;
 var ironIcon = void 0;
@@ -679,6 +729,7 @@ var animationFrame = void 0;
 
 //Variables relating to gamestate
 var asteroid = void 0;
+var gems = [];
 var player = {
   x: -200,
   y: -200,
@@ -791,6 +842,7 @@ var init = function init() {
 
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
+  rubbleIcon = document.querySelector("#rubbleIcon");
   galaxyBg = document.querySelector("#galaxyBg");
   gbIcon = document.querySelector("#gbIcon");
   ironIcon = document.querySelector("#ironIcon");
@@ -4076,6 +4128,7 @@ var processPlayerClick = function processPlayerClick(data) {
     r: ply.color.r,
     g: ply.color.g,
     b: ply.color.b,
+    speed: 2,
     radius: 0,
     lineWidth: 20
   };
@@ -4180,6 +4233,7 @@ var spawnAsteroid = function spawnAsteroid(data) {
   //Reset gamespace
   effectCircles = [];
   players = [];
+  gems = [];
   subContract = null;
 
   account.rewards = null;
@@ -4219,10 +4273,87 @@ var updateSubContract = function updateSubContract(data) {
 
 //Process a request from the server to finish an asteroid
 var finishAsteroid = function finishAsteroid(data) {
-  asteroid = null;
-
   account.rewards = data.rewards;
   socket.emit('getMyBankData');
+
+  data.rewards["rubble"] = 50;
+
+  //Create a massive effect circle and add it to the array (to be drawn and updated)
+  var newEffectCircle = {
+    x: prepCanvas.width / 2,
+    y: prepCanvas.height / 2,
+    r: 244,
+    g: 235,
+    b: 66,
+    speed: 20,
+    radius: 0,
+    lineWidth: 40
+  };
+
+  effectCircles.push(newEffectCircle);
+
+  //Construct reward objects for entertainment purposes!
+  var rewardKeys = Object.keys(data.rewards);
+  for (var i = 0; i < rewardKeys.length; i++) {
+    var key = rewardKeys[i];
+    var numberRewards = Math.min(data.rewards[key], 500);
+    var image = void 0;
+
+    //Select the correct image
+    switch (key) {
+      case "iron":
+        image = ironIcon;
+        break;
+      case "copper":
+        image = copperIcon;
+        break;
+      case "sapphire":
+        image = sapphireIcon;
+        break;
+      case "emerald":
+        image = emeraldIcon;
+        break;
+      case "ruby":
+        image = rubyIcon;
+        break;
+      case "diamond":
+        image = diamondIcon;
+        break;
+      default:
+        image = asteroid.image;
+        break;
+    }
+
+    //Make the specified number of 'gems'
+    for (var j = 0; j < numberRewards; j++) {
+
+      //Give the gem a random velocity
+      var randAngle = Math.random() * 360;
+      var radian = randAngle * Math.PI / 180;
+      var displayAngle = 0;
+      var angleSpeed = Math.random() * 0.03;
+      var speed = 20 * Math.random() + 2;
+      var vector = {
+        x: Math.sin(radian) * speed,
+        y: Math.cos(radian) * speed
+      };
+
+      var gem = {
+        image: image,
+        x: prepCanvas.width / 2,
+        y: prepCanvas.height / 2,
+        radian: radian,
+        speed: speed,
+        vector: vector,
+        displayAngle: displayAngle,
+        angleSpeed: angleSpeed
+      };
+
+      gems.push(gem);
+    }
+  }
+
+  asteroid = null;
 };
 
 //Process a request from the server to finish a sub contract
