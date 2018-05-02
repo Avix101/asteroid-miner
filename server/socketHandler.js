@@ -46,6 +46,17 @@ const joinGame = (sock, id) => {
         return;
       }
 
+      // Alert the users in the previous room (if there is one)
+      // that the player just left
+      if (socket.roomJoined) {
+        io.sockets.in(socket.roomJoined).emit('playerLeave', { hash: socket.hash });
+      }
+
+      // Avoid rapidly jumping into the same room
+      if (socket.roomJoined === id) {
+        return;
+      }
+
       // Have the socket join the new gameroom
       socket.leave(socket.roomJoined);
       socket.join(id);
@@ -58,6 +69,17 @@ const joinGame = (sock, id) => {
     });
   } else {
     const asteroid = miner.game.getAsteroid(id);
+
+    // Alert the users in the previous room (if there is one)
+    // that the player just left
+    if (socket.roomJoined) {
+      io.sockets.in(socket.roomJoined).emit('playerLeave', { hash: socket.hash });
+    }
+
+    // Avoid rapidly jumping into the same room
+    if (socket.roomJoined === id) {
+      return;
+    }
 
     // Have the socket join the new gameroom
     socket.leave(socket.roomJoined);
@@ -78,12 +100,22 @@ const init = (ioInstance) => {
     // Create a new hash for the connected client
     const time = new Date().getTime();
     const hash = xxh.h32(`${socket.id}${time}`, 0x14611037).toString(16);
+    const r = Math.floor(Math.random() * 200) + 55;
+    const g = Math.floor(Math.random() * 200) + 55;
+    const b = Math.floor(Math.random() * 200) + 55;
+    const color = { r, g, b };
 
     socket.hash = hash;
+    socket.color = color;
 
     // Join the lobby initially
     socket.join('lobby');
     socket.roomJoined = 'lobby';
+
+    socket.emit('playerInfo', {
+      hash,
+      color,
+    });
 
     // If the the game room doesn't exist, create it.
     // Otherwise send the current asteroid to the player
@@ -137,6 +169,8 @@ const init = (ioInstance) => {
     socket.on('click', (data) => {
       miner.game.addClick(socket.roomJoined, data.mouse);
 
+      io.sockets.in(socket.roomJoined).emit('click', { hash: socket.hash });
+
       // Also fulfill sub contract stuff
       if (socket.sub) {
         // Maybe switch to miner.game.handleSubClick(...etc)
@@ -184,6 +218,21 @@ const init = (ioInstance) => {
       }
     });
 
+    // Process a request for a player to update their position
+    socket.on('playerUpdate', (data) => {
+      if (!verifyDataIntegrity(data, ['x', 'y'])) {
+        return;
+      }
+
+      const playerData = {
+        hash: socket.hash,
+        x: data.x,
+        y: data.y,
+        color: socket.color,
+      };
+      socket.to(socket.roomJoined).emit('playerUpdate', playerData);
+    });
+
     // Process a request for an update regarding an account's bank
     socket.on('getMyBankData', () => {
       // Grab the updated account data
@@ -202,6 +251,11 @@ const init = (ioInstance) => {
           bank: socket.handshake.session.account.bank,
         });
       });
+    });
+
+    // Process a client's disconnect from the server
+    socket.on('disconnect', () => {
+      io.sockets.in(socket.roomJoined).emit('playerLeave', { hash: socket.hash });
     });
   });
 };

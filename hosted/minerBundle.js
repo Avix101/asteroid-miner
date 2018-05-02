@@ -484,6 +484,8 @@ var Rectangle = function (_Animatable4) {
 ;
 "use strict";
 
+var effectCircles = [];
+
 //Interpolate between two values given a ratio between 0 and 1
 var lerp = function lerp(val1, val2, ratio) {
   var component1 = (1 - ratio) * val1;
@@ -529,6 +531,45 @@ var drawAndUpdateAsteroid = function drawAndUpdateAsteroid() {
   prepCtx.restore();
 };
 
+//Draws a player's pick on screen
+var drawPick = function drawPick(context, ply) {
+
+  if (!ply.pick) {
+    return;
+  }
+
+  context.save();
+
+  context.drawImage(ply.pick, ply.x, ply.y, pickIcon.width, pickIcon.height);
+
+  context.restore();
+};
+
+//Draws and updates effect circles
+var drawAndUpdateEffectCircles = function drawAndUpdateEffectCircles(context) {
+  context.save();
+
+  for (var i = 0; i < effectCircles.length; i++) {
+    var circle = effectCircles[i];
+
+    context.strokeStyle = "rgb(" + circle.r + ", " + circle.g + ", " + circle.b + ")";
+    context.lineWidth = circle.lineWidth;
+    context.beginPath();
+    context.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+    context.stroke();
+
+    circle.radius += 2;
+    circle.lineWidth -= 0.3;
+
+    if (circle.lineWidth <= 0) {
+      effectCircles.splice(i, 1);
+      i--;
+    }
+  }
+
+  context.restore();
+};
+
 //The main call to draw everything to the prep canvas
 var draw = function draw() {
 
@@ -537,12 +578,25 @@ var draw = function draw() {
 
   //Draw stuff to the prep canvas
 
+  prepCtx.filter = "hue-rotate(" + player.color + "deg)";
+
   //If the background image has loaded, draw it to the background of the prep canvas
   if (galaxyBg) {
     prepCtx.drawImage(galaxyBg, 0, 0, prepCanvas.width, prepCanvas.height);
   }
 
+  //Draw and update the asteroid
   drawAndUpdateAsteroid();
+
+  //Draw all players' picks
+  drawPick(prepCtx, player);
+  var playerKeys = Object.keys(players);
+  for (var i = 0; i < playerKeys.length; i++) {
+    drawPick(prepCtx, players[playerKeys[i]]);
+  }
+
+  //Draw and update player effect circles
+  drawAndUpdateEffectCircles(prepCtx);
 
   //Draw the prep canvas to the resized frame of the display canvas
   displayFrame(canvas, ctx);
@@ -595,6 +649,7 @@ var showingAd = false;
 var adAudio = void 0;
 
 //Static image files
+var pickIcon = void 0;
 var galaxyBg = void 0;
 var gbIcon = void 0;
 var ironIcon = void 0;
@@ -624,6 +679,12 @@ var animationFrame = void 0;
 
 //Variables relating to gamestate
 var asteroid = void 0;
+var player = {
+  x: -200,
+  y: -200,
+  color: { r: 0, g: 0, b: 0 }
+};
+var players = {};
 
 //Current view
 var pageView = void 0;
@@ -656,6 +717,9 @@ var loadView = function loadView() {
   //Find the page's hash
   var hash = window.location.hash;
   pageView = hash;
+
+  //Render my contracts panel
+  renderMyContractsPanel();
 
   //Depending on the hash, render the main content
   switch (hash) {
@@ -709,6 +773,10 @@ var loadView = function loadView() {
 //Run this function when the page loads
 var init = function init() {
 
+  //Update this every so often (can't be done via sockets, as the panel
+  //reaches into various contracts (different game rooms)
+  setInterval(renderMyContractsPanel, 2000);
+
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
   galaxyBg = document.querySelector("#galaxyBg");
@@ -719,6 +787,7 @@ var init = function init() {
   emeraldIcon = document.querySelector("#emeraldIcon");
   rubyIcon = document.querySelector("#rubyIcon");
   diamondIcon = document.querySelector("#diamondIcon");
+  pickIcon = document.querySelector("#pickIcon");
 
   //Load the requested view
   loadView();
@@ -734,7 +803,11 @@ var init = function init() {
 
   //Attach custom socket events
   //socket.on('event', eventFunc);
+  socket.on('playerInfo', setupPlayer);
+  socket.on('playerUpdate', updatePlayer);
+  socket.on('playerLeave', removePlayer);
   socket.on('spawnAsteroid', spawnAsteroid);
+  socket.on('click', processPlayerClick);
   socket.on('asteroidUpdate', updateAsteroid);
   socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);
@@ -2997,7 +3070,7 @@ var ProgressPanel = function ProgressPanel(props) {
       ),
       React.createElement(
         "div",
-        { className: "progress" },
+        { className: "progress bg-light" },
         React.createElement("div", { className: "progress-bar progress-bar-striped progress-bar-animated bg-success",
           role: "progressbar",
           "aria-value": props.current,
@@ -3014,9 +3087,6 @@ var ProgressPanel = function ProgressPanel(props) {
 var renderGame = function renderGame(width, height) {
   ReactDOM.render(React.createElement(GameWindow, { width: width, height: height }), document.querySelector("#main"));
 
-  //Render my contracts panel
-  renderMyContractsPanel();
-
   //Hook up viewport (display canvas to JS code)
   canvas = document.querySelector("#viewport");
   ctx = canvas.getContext('2d');
@@ -3024,6 +3094,7 @@ var renderGame = function renderGame(width, height) {
   //Add event listeners
   canvas.addEventListener('click', processClick);
   canvas.addEventListener('mousedown', disableExtraActions);
+  canvas.addEventListener('mousemove', processMouseMove);
 };
 
 //Load an ad to display to the user
@@ -3213,7 +3284,7 @@ var getTokenWithCallback = function getTokenWithCallback(callback) {
     }
   });
 };
-"use strict";
+'use strict';
 
 //The main update call which runs 60 times a second (ideally)
 var update = function update() {
@@ -3246,10 +3317,132 @@ var processClick = function processClick(e) {
   socket.emit('click', { mouse: mousePos });
 };
 
+//Process a mouse movement on the main display canvas
+var processMouseMove = function processMouseMove(e) {
+  var mousePos = getMouse(e);
+  player.x = mousePos.x;
+  player.y = mousePos.y;
+  socket.emit('playerUpdate', { x: mousePos.x, y: mousePos.y });
+};
+
+//Process a mouse click confirmation from the server from a player
+var processPlayerClick = function processPlayerClick(data) {
+  //Determine if the player is this client or another
+  var ply = void 0;
+  if (data.hash === hash) {
+    ply = player;
+  } else {
+    ply = players[data.hash];
+  }
+
+  //Return if the client has not been created yet
+  if (!ply) {
+    return;
+  }
+
+  //Create a new effect circle and add it to the array (to be drawn and updated)
+  var newEffectCircle = {
+    x: ply.x,
+    y: ply.y,
+    r: ply.color.r,
+    g: ply.color.g,
+    b: ply.color.b,
+    radius: 0,
+    lineWidth: 20
+  };
+
+  effectCircles.push(newEffectCircle);
+};
+
+//Recolor a player's pick
+//Inspired by: https://stackoverflow.com/questions/24405245/html5-canvas-change-image-color
+var recolor = function recolor(player, color) {
+  var tempCanvas = document.createElement("canvas");
+  tempCanvas.width = pickIcon.width;
+  tempCanvas.height = pickIcon.height;
+
+  var tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(pickIcon, 0, 0);
+
+  //Convert the image to color data
+  var imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+  var data = imageData.data;
+
+  //Iterate over pixels and recolor image
+  for (var i = 0; i < data.length; i += 4) {
+    data[i] = color.r;
+    data[i + 1] = color.g;
+    data[i + 2] = color.b;
+  }
+
+  //Put the image data back into the canvas and export the image for later use
+  tempCtx.putImageData(imageData, 0, 0);
+
+  //Create a new image
+  var image = new Image();
+
+  image.onload = function () {
+    player.pick = image;
+  };
+
+  image.src = tempCanvas.toDataURL();
+};
+
+//Process player specific data sent from the server
+var setupPlayer = function setupPlayer(data) {
+
+  hash = data.hash;
+
+  player = {
+    x: -200,
+    y: -200,
+    hash: data.hash,
+    color: data.color
+  };
+
+  recolor(player, player.color);
+};
+
+//Process a player update
+var updatePlayer = function updatePlayer(data) {
+  var ply = void 0;
+
+  //If the player is the current client, refer to the player object
+  if (player.hash === data.hash) {
+    ply = player;
+  } else {
+    //If the player is a different client, make sure they exist
+    if (!players[data.hash]) {
+      players[data.hash] = {
+        color: data.color
+      };
+      recolor(players[data.hash], data.color);
+    }
+
+    ply = players[data.hash];
+  }
+
+  ply.x = data.x;
+  ply.y = data.y;
+};
+
+//Remove a player so that they aren't drawn and updated
+var removePlayer = function removePlayer(data) {
+  //Ensure the player exists in the client's data
+  if (players[data.hash]) {
+    players[data.hash] = null;
+    delete players[data.hash];
+  }
+};
+
 //Process a request from the server to spawn an asteroid
 var spawnAsteroid = function spawnAsteroid(data) {
   var location = { x: prepCanvas.width / 2, y: prepCanvas.height / 2 };
   asteroid = new Asteroid(data.asteroid, location);
+
+  //Reset gamespace
+  effectCircles = [];
+  players = [];
 };
 
 //Process a request from the server to update the asteroid

@@ -29,10 +29,132 @@ const processClick = (e) => {
   socket.emit('click', { mouse: mousePos });
 };
 
+//Process a mouse movement on the main display canvas
+const processMouseMove = (e) => {
+  const mousePos = getMouse(e);
+  player.x = mousePos.x;
+  player.y = mousePos.y;
+  socket.emit('playerUpdate', { x: mousePos.x, y: mousePos.y });
+};
+
+//Process a mouse click confirmation from the server from a player
+const processPlayerClick = (data) => {
+  //Determine if the player is this client or another
+  let ply;
+  if(data.hash === hash){
+    ply = player;
+  } else {
+    ply = players[data.hash];
+  }
+  
+  //Return if the client has not been created yet
+  if(!ply){
+    return;
+  }
+  
+  //Create a new effect circle and add it to the array (to be drawn and updated)
+  const newEffectCircle = {
+    x: ply.x,
+    y: ply.y,
+    r: ply.color.r,
+    g: ply.color.g,
+    b: ply.color.b,
+    radius: 0,
+    lineWidth: 20,
+  }
+  
+  effectCircles.push(newEffectCircle);
+};
+
+//Recolor a player's pick
+//Inspired by: https://stackoverflow.com/questions/24405245/html5-canvas-change-image-color
+const recolor = (player, color) => {
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = pickIcon.width;
+  tempCanvas.height = pickIcon.height;
+  
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(pickIcon, 0, 0);
+  
+  //Convert the image to color data
+  const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+  const data = imageData.data;
+  
+  //Iterate over pixels and recolor image
+  for(let i = 0; i < data.length; i += 4){
+    data[i] = color.r;
+    data[i + 1] = color.g;
+    data[i + 2] = color.b;
+  }
+  
+  //Put the image data back into the canvas and export the image for later use
+  tempCtx.putImageData(imageData, 0, 0);
+  
+  //Create a new image
+  const image = new Image();
+  
+  image.onload = () => {
+    player.pick = image;
+  }
+  
+  image.src = tempCanvas.toDataURL();
+};
+
+//Process player specific data sent from the server
+const setupPlayer = (data) => {
+  
+  hash = data.hash;
+  
+  player = {
+    x: -200,
+    y: -200,
+    hash: data.hash,
+    color: data.color,
+  };
+  
+  recolor(player, player.color);
+}
+
+//Process a player update
+const updatePlayer = (data) => {
+  let ply;
+  
+  //If the player is the current client, refer to the player object
+  if(player.hash === data.hash){
+    ply = player;
+  } else {
+    //If the player is a different client, make sure they exist
+    if(!players[data.hash]){
+      players[data.hash] = {
+        color: data.color,
+      };
+      recolor(players[data.hash], data.color);
+    }
+    
+    ply = players[data.hash];
+  }
+  
+  ply.x = data.x;
+  ply.y = data.y;
+}
+
+//Remove a player so that they aren't drawn and updated
+const removePlayer = (data) => {
+  //Ensure the player exists in the client's data
+  if(players[data.hash]){
+    players[data.hash] = null;
+    delete players[data.hash];
+  }
+};
+
 //Process a request from the server to spawn an asteroid
 const spawnAsteroid = (data) => {
   const location = {x: prepCanvas.width / 2, y: prepCanvas.height / 2};
   asteroid = new Asteroid(data.asteroid, location);
+  
+  //Reset gamespace
+  effectCircles = [];
+  players = [];
 };
 
 //Process a request from the server to update the asteroid

@@ -11,6 +11,7 @@ let showingAd = false;
 let adAudio;
 
 //Static image files
+let pickIcon;
 let galaxyBg;
 let gbIcon;
 let ironIcon;
@@ -39,6 +40,12 @@ let animationFrame;
 
 //Variables relating to gamestate
 let asteroid;
+let player = {
+  x: -200,
+  y: -200,
+  color: { r: 0, g: 0, b: 0},
+};
+let players = {};
 
 //Current view
 let pageView;
@@ -71,6 +78,9 @@ const loadView = () => {
   //Find the page's hash
   const hash = window.location.hash;
   pageView = hash;
+  
+  //Render my contracts panel
+  renderMyContractsPanel();
   
   //Depending on the hash, render the main content
   switch(hash){
@@ -116,6 +126,10 @@ const loadView = () => {
 //Run this function when the page loads
 const init = () => {
   
+  //Update this every so often (can't be done via sockets, as the panel
+  //reaches into various contracts (different game rooms)
+  setInterval(renderMyContractsPanel, 2000);
+  
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
   galaxyBg = document.querySelector("#galaxyBg");
@@ -126,6 +140,7 @@ const init = () => {
   emeraldIcon = document.querySelector("#emeraldIcon");
   rubyIcon = document.querySelector("#rubyIcon");
   diamondIcon = document.querySelector("#diamondIcon");
+  pickIcon = document.querySelector("#pickIcon");
   
   //Load the requested view
   loadView();
@@ -141,7 +156,11 @@ const init = () => {
   
   //Attach custom socket events
   //socket.on('event', eventFunc);
+  socket.on('playerInfo', setupPlayer);
+  socket.on('playerUpdate', updatePlayer);
+  socket.on('playerLeave', removePlayer);
   socket.on('spawnAsteroid', spawnAsteroid);
+  socket.on('click', processPlayerClick);
   socket.on('asteroidUpdate', updateAsteroid);
   socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);

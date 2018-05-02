@@ -1189,7 +1189,7 @@ const ProgressPanel = (props) => {
         <h1>Progress</h1>
         <hr className="my-4" />
         <p className="lead">Clicks: {props.current}/{props.total}</p>
-        <div className="progress">
+        <div className="progress bg-light">
           <div className="progress-bar progress-bar-striped progress-bar-animated bg-success"
             role="progressbar"
             aria-value={props.current}
@@ -1210,9 +1210,6 @@ const renderGame = (width, height) => {
     document.querySelector("#main")
   );
   
-  //Render my contracts panel
-  renderMyContractsPanel();
-  
   //Hook up viewport (display canvas to JS code)
   canvas = document.querySelector("#viewport");
   ctx = canvas.getContext('2d');
@@ -1220,6 +1217,7 @@ const renderGame = (width, height) => {
   //Add event listeners
   canvas.addEventListener('click', processClick);
   canvas.addEventListener('mousedown', disableExtraActions);
+  canvas.addEventListener('mousemove', processMouseMove);
 };
 
 //Load an ad to display to the user
