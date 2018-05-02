@@ -152,49 +152,48 @@ const joinPartnerGame = (sock, id) => {
   }
 };
 
-//Limits for sockets
+// Limits for sockets
 const DDOS = 1000;
 const TOO_MANY_CLICKS = 50;
 
-//Keeps track of # of socket requests
+// Keeps track of # of socket requests
 let requestCounter = {};
 let clickCounter = {};
 
-//Checks and clears the rate limiter every 1000ms
+// Checks and clears the rate limiter every 1000ms
 const checkRateLimiter = () => {
-  
   const socketKeys = Object.keys(requestCounter);
-  for(let i = 0; i < socketKeys.length; i++){
+  for (let i = 0; i < socketKeys.length; i++) {
     const key = socketKeys[i];
-    if(requestCounter[key] > DDOS){
-      if(io.sockets.connected[key]){
-        io.sockets.connected[key].emit('errorMessage', { 
-          error: "DDOS attack detected. This is a serious violation. Connection broken by angry server gods." 
+    if (requestCounter[key] > DDOS) {
+      if (io.sockets.connected[key]) {
+        io.sockets.connected[key].emit('errorMessage', {
+          error: 'DDOS attack detected. This is a serious violation. Connection broken by angry server gods.',
         });
         io.sockets.connected[key].disconnect();
       }
     }
   }
-  
-  requestCounter = {};
-}
 
-checkClickLimiter = () => {
+  requestCounter = {};
+};
+
+const checkClickLimiter = () => {
   const socketKeys = Object.keys(clickCounter);
-  for(let i = 0; i < socketKeys.length; i++){
+  for (let i = 0; i < socketKeys.length; i++) {
     const key = socketKeys[i];
-    if(clickCounter[key] > TOO_MANY_CLICKS){
-      if(io.sockets.connected[key]){
-        io.sockets.connected[key].emit('errorMessage', { 
-          error: "Auto-Mining tool usage detected. Connection broken by Robo Corp." 
+    if (clickCounter[key] > TOO_MANY_CLICKS) {
+      if (io.sockets.connected[key]) {
+        io.sockets.connected[key].emit('errorMessage', {
+          error: 'Auto-Mining tool usage detected. Connection broken by Robo Corp.',
         });
         io.sockets.connected[key].disconnect();
       }
     }
   }
-  
+
   clickCounter = {};
-}
+};
 
 setInterval(() => {
   checkRateLimiter();
@@ -208,17 +207,17 @@ const init = (ioInstance) => {
   io.on('connection', (sock) => {
     const socket = sock;
 
-    //General rate limiter for sockets
+    // General rate limiter for sockets
     socket.use((packet, next) => {
-      if(!requestCounter[socket.id]){
+      if (!requestCounter[socket.id]) {
         requestCounter[socket.id] = 1;
       } else {
         requestCounter[socket.id]++;
       }
-      
+
       next();
     });
-    
+
     // Create a new hash for the connected client
     const time = new Date().getTime();
     const hash = xxh.h32(`${socket.id}${time}`, 0x14611037).toString(16);
@@ -314,14 +313,13 @@ const init = (ioInstance) => {
 
     // Process clicks sent to the server
     socket.on('click', (data) => {
-
-      //Attempt to detect auto-clicking usage
-      if(!clickCounter[socket.id]){
+      // Attempt to detect auto-clicking usage
+      if (!clickCounter[socket.id]) {
         clickCounter[socket.id] = 1;
       } else {
         clickCounter[socket.id]++;
       }
-      
+
       miner.game.addClick(socket.roomJoined, data.mouse, socket.handshake.session.account.power);
 
       io.sockets.in(socket.roomJoined).emit('click', { hash: socket.hash });
