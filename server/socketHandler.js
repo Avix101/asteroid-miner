@@ -91,6 +91,7 @@ const joinGame = (sock, id) => {
   }
 };
 
+// Join a Partner room, these are meant to be multiplayer.
 const joinPartnerGame = (sock, id) => {
   const socket = sock;
   if (!miner.game.hasGame(id)) {
@@ -195,6 +196,7 @@ const init = (ioInstance) => {
         joinGame(socket, subContract.contractId);
       });
     });
+    // Process a request to start mining a partner contract
     socket.on('minePartner', (data) => {
       if (!verifyDataIntegrity(data, ['partnerContractId'])) {
         return;

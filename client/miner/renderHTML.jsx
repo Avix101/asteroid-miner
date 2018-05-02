@@ -179,6 +179,7 @@ const handleMarketSubmit = (e) => {
   return false;
 };
 
+// Handles a request to buy an upgrade
 const handlePurchase = (power) => {
   sendAjax('POST', $(`#upgradeForm${power}`).attr("action"), $(`#upgradeForm${power}`).serialize(), (data) => {
     handleSuccess(data.message);

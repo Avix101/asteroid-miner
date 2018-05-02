@@ -97,6 +97,8 @@ class Asteroid {
 
       console.dir(this.contract._doc);
 
+      // If it's not a partner contract then it is a regular
+      // contract with the possibility for sub-contracts.
       if (!this.contract._doc.partners) {
         // Give the owner their rewards
         for (let i = 0; i < rewardKeys.length; i++) {
@@ -132,15 +134,17 @@ class Asteroid {
           },
         );
       }
-      console.log('Partner Contract');
-      console.log(`Partners detected: ${this.contract._doc.partners.length}`);
+      // If we made it this far then it's a partner contract
 
+      // Owner gets at least 1/4 shares
       shares[this.contract.ownerId] = {
         id: this.contract.ownerId,
         shares: 1,
       };
 
+      // For each partner, determine how many shares they had.
       for (let i = 0; i < this.contract._doc.partners.length; i++) {
+        // If partner hasn't been added, add it with a share of 1
         if (!shares[this.contract._doc.partners[i]]) {
           shares[this.contract._doc.partners[i]] = {
             id: this.contract._doc.partners[i],
@@ -153,7 +157,7 @@ class Asteroid {
 
       const sharesKeys = Object.keys(shares);
 
-
+      // For each player with shares, distribute rewards
       for (let i = 0; i < sharesKeys.length; i++) {
         const shareKey = sharesKeys[i];
 

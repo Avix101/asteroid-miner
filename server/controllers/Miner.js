@@ -341,6 +341,7 @@ const sellResources = (request, response) => {
   });
 };
 
+// Purchase upgrades using materials
 const purchaseUpgrades = (request, response) => {
   const req = request;
   const res = response;
