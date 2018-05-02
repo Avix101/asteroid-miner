@@ -9,6 +9,7 @@ const models = require('./models');
 
 const { Contract } = models;
 const { SubContract } = models;
+const { PartnerContract } = models;
 const { Account } = models;
 
 let io;
@@ -90,6 +91,36 @@ const joinGame = (sock, id) => {
   }
 };
 
+const joinPartnerGame = (sock, id) => {
+  const socket = sock;
+  if (!miner.game.hasGame(id)) {
+    PartnerContract.PartnerContractModel.findById(id, (err, contract) => {
+      if (err || !contract) {
+        socket.emit('errorMessage', { error: 'Could not find partner contract' });
+        return;
+      }
+
+      // Have the socket join the new gameroom
+      socket.leave(socket.roomJoined);
+      socket.join(id);
+      socket.roomJoined = id;
+
+      miner.game.createGame(id);
+      miner.game.generateAsteroid(id, contract, (asteroid) => {
+        io.sockets.in(id).emit('spawnAsteroid', { asteroid });
+      });
+    });
+  } else {
+    const asteroid = miner.game.getAsteroid(id);
+
+    socket.leave(socket.roomJoined);
+    socket.join(id);
+    socket.roomJoined = id;
+
+    socket.emit('spawnAsteroid', { asteroid });
+  }
+};
+
 // Setup sockets and attach custom events
 const init = (ioInstance) => {
   io = ioInstance;
@@ -162,6 +193,23 @@ const init = (ioInstance) => {
 
         socket.sub = subContract;
         joinGame(socket, subContract.contractId);
+      });
+    });
+    socket.on('minePartner', (data) => {
+      if (!verifyDataIntegrity(data, ['partnerContractId'])) {
+        return;
+      }
+
+      const partnerId = data.partnerContractId;
+
+      PartnerContract.PartnerContractModel.findById(partnerId, (err, partnerContract) => {
+        if (err || !partnerContract) {
+          socket.emit('errorMessage', { error: 'Could not find partner contract' });
+          return;
+        }
+
+        socket.partner = data.partnerContractId;
+        joinPartnerGame(socket, data.partnerContractId);
       });
     });
 

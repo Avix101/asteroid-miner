@@ -917,6 +917,17 @@ var startMine = function startMine(e) {
   socket.emit('mine', { contractId: contractId });
 };
 
+var startPartnerMine = function startPartnerMine(e) {
+  var partnerContractId = e.target.getAttribute("data-contract-id");
+
+  if (!partnerContractId) {
+    return;
+  }
+
+  window.location.hash = "#miner";
+  socket.emit('minePartner', { partnerContractId: partnerContractId });
+};
+
 //Constructs a window displaying the user's contracts
 var MyContractsWindow = function MyContractsWindow(props) {
   return React.createElement(
@@ -1235,7 +1246,7 @@ var MyContracts = function MyContracts(props) {
                 ),
                 React.createElement(
                   "button",
-                  { "data-contract-id": contract.partnerContractId, onClick: startMine,
+                  { "data-contract-id": contract.partnerContractId, onClick: startPartnerMine,
                     className: "btn btn-lg btn-primary fullButton" },
                   "Mine"
                 )

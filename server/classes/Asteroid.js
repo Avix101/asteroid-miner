@@ -99,37 +99,67 @@ class Asteroid {
         account.bank[key] += this.rewards[key];
       }
 
-      // Delete all uncompleted sub contracts
-      // Also check against owner of sub contract(for partner cases)
-      return SubContract.SubContractModel.findSubContractsOf(
-        this.contract._id,
-        (er2, subContracts) => {
-          if (er2 || !subContracts) {
+      console.dir(this.contract._doc);
+
+      if (!this.contract._doc.partners) {
+        console.log('Sub Contract');
+        return SubContract.SubContractModel.findSubContractsOf(
+          this.contract._id,
+          (er2, subContracts) => {
+            if (er2 || !subContracts) {
+              return;
+            }
+
+            // Credit contract owner this sub contract funds that weren't utilized
+            for (let i = 0; i < subContracts.length; i++) {
+              const subContract = subContracts[i];
+
+              const keys = Object.keys(subContract.rewards);
+              for (let j = 0; j < keys.length; j++) {
+                const key2 = keys[j];
+                account.bank[key2] += subContract.rewards[key2];
+              }
+
+              // Destroy the subContract
+              subContract.remove();
+            }
+
+            // Save account
+            account.markModified('bank');
+            account.save();
+            this.contract.remove();
+          },
+        );
+      }
+      console.log('Partner Contract');
+      console.log(`Partners detected: ${this.contract._doc.partners.length}`);
+
+      for (let i = 0; i < this.contract._doc.partners.length; i++) {
+        console.log(this.contract._doc.partners[i]);
+        Account.AccountModel.findById(this.contract._doc.partners[i], (er3, partnerAcc) => {
+          if (er3 || !partnerAcc) {
             return;
           }
 
-          // Credit contract owner this sub contract funds that weren't utilized
-          for (let i = 0; i < subContracts.length; i++) {
-            const subContract = subContracts[i];
+          console.log(partnerAcc);
 
-            const keys = Object.keys(subContract.rewards);
-            for (let j = 0; j < keys.length; j++) {
-              const key2 = keys[j];
-              account.bank[key2] += subContract.rewards[key2];
-            }
+          const partnerAccount = partnerAcc;
 
-            // Destroy the subContract
-            subContract.remove();
+          for (let z = 0; z < rewardKeys.length; z++) {
+            const key = rewardKeys[z];
+            partnerAccount[key] += this.rewards[key];
           }
 
-          // Save account
-          account.markModified('bank');
-          account.save();
-          this.contract.remove();
-        },
-      );
+          partnerAccount.markModified('bank');
+          partnerAccount.save();
+        });
+      }
+      account.markModified('bank');
+      account.save();
+      return this.contract.remove();
     });
   }
+
 
   // Mine an asteroid by a given amount (progress towards completion)
   mine(amount) {

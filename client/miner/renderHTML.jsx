@@ -58,6 +58,17 @@ const startMine = (e) => {
   socket.emit('mine', { contractId });
 };
 
+const startPartnerMine = (e) => {
+  const partnerContractId = e.target.getAttribute("data-contract-id");
+  
+  if(!partnerContractId){
+    return;
+  }
+  
+  window.location.hash = "#miner";
+  socket.emit('minePartner', { partnerContractId });
+}
+
 //Constructs a window displaying the user's contracts
 const MyContractsWindow = (props) => {
   return (
@@ -258,7 +269,7 @@ const MyContracts = (props) => {
               <div className="row">
                 <div className="col-sm-12 text-center">
                   <p className="card-text">Progress: {contract.asteroid.progress} / {contract.asteroid.toughness}</p>
-                  <button data-contract-id={contract.partnerContractId} onClick={startMine}
+                  <button data-contract-id={contract.partnerContractId} onClick={startPartnerMine}
                     className="btn btn-lg btn-primary fullButton">Mine</button>
                 </div>
               </div>
