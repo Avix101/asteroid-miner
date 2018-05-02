@@ -168,7 +168,8 @@ class Asteroid {
 
           for (let z = 0; z < rewardKeys.length; z++) {
             const key = rewardKeys[z];
-            partnerAccount.bank[key] += (this.rewards[key] * (shares[shareKey].shares / 4));
+            partnerAccount.bank[key] +=
+                Math.ceil(this.rewards[key] * (shares[shareKey].shares / 4));
           }
 
           partnerAccount.markModified('bank');
