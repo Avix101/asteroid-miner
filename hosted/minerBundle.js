@@ -3624,7 +3624,7 @@ var ProgressPanel = function ProgressPanel(props) {
   //Render asteroid progress if applicable
   var asteroidProgress = void 0;
   var asteroidProgressWidth = void 0;
-  if (props.current && props.total) {
+  if (props.current > -1 && props.total > -1) {
     asteroidProgressWidth = { width: props.current / props.total * 100 + "%" };
     asteroidProgress = React.createElement(
       "div",

@@ -1453,7 +1453,7 @@ const ProgressPanel = (props) => {
   //Render asteroid progress if applicable
   let asteroidProgress;
   let asteroidProgressWidth;
-  if(props.current && props.total){
+  if(props.current > -1 && props.total > -1){
     asteroidProgressWidth = {width: `${(props.current / props.total) * 100}%`};
     asteroidProgress = (
       <div>
