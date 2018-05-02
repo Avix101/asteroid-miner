@@ -447,7 +447,7 @@ const finishAsteroid = (contractId, contract) => {
         === contract.ownerId.toString()
       ) {
         client.emit('finishAsteroid', { rewards: contract.asteroid.rewards });
-      } else {
+      } else if (client.sub) {
         client.emit('cancelSubContract');
         client.sub = null;
       }
