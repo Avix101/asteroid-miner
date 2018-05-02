@@ -1060,6 +1060,15 @@ var handleMarketSubmit = function handleMarketSubmit(e) {
   return false;
 };
 
+var handlePurchase = function handlePurchase(power) {
+  sendAjax('POST', $("#upgradeForm" + power).attr("action"), $("#upgradeForm" + power).serialize(), function (data) {
+    handleSuccess(data.message);
+    socket.emit('getMyBankData');
+    loadView();
+  });
+  return false;
+};
+
 // Buy a contract as a partner one
 var purchaseAsPartnerContract = function purchaseAsPartnerContract(e) {
   var asteroidClass = e.target.getAttribute('data-purchase');
@@ -2093,7 +2102,410 @@ var UpgradesWindow = function UpgradesWindow(props) {
         { className: "lead" },
         "Purchase these to make mining easier!"
       ),
-      React.createElement("hr", { className: "my-4" })
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "div",
+        { className: "row justify-content-center" },
+        React.createElement(
+          "p",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+          " Iron: ",
+          account.bank.iron,
+          React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+          " Copper: ",
+          account.bank.copper,
+          React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+          " Sapphires: ",
+          account.bank.sapphire,
+          React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+          " Emeralds: ",
+          account.bank.emerald,
+          React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+          " Rubies: ",
+          account.bank.ruby,
+          React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+          " Diamonds: ",
+          account.bank.diamond
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "row justify-content-center border border-info" },
+        React.createElement(
+          "div",
+          { className: "col-sm-8 text-center" },
+          React.createElement(
+            "p",
+            { className: "lead" },
+            "Upgrade by 1 mining power"
+          ),
+          React.createElement(
+            "p",
+            null,
+            React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+            ": ",
+            250,
+            React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+            ": ",
+            20,
+            React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+            ": ",
+            2,
+            React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+            ": ",
+            0,
+            React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+            ": ",
+            0,
+            React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+            ": ",
+            0
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "col-sm-4 text-center upgrade-button" },
+          React.createElement(
+            "form",
+            { id: "upgradeForm1", onSubmit: function onSubmit(e) {
+                e.preventDefault();handlePurchase(1);
+              }, name: "handlePurchaseForm", action: "/purchaseUpgrade", method: "POST" },
+            React.createElement(
+              "fieldset",
+              null,
+              React.createElement("input", { type: "hidden", name: "power", value: "1" }),
+              React.createElement("input", { type: "hidden", name: "iron", value: "250" }),
+              React.createElement("input", { type: "hidden", name: "copper", value: "20" }),
+              React.createElement("input", { type: "hidden", name: "sapphire", value: "2" }),
+              React.createElement("input", { type: "hidden", name: "emerald", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "ruby", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "diamond", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "_csrf", value: props.csrf }),
+              React.createElement(
+                "button",
+                { type: "submit", className: "btn btn-success btn-sm btn-block" },
+                "Purchase"
+              )
+            )
+          )
+        )
+      ),
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "div",
+        { className: "row justify-content-center border border-info" },
+        React.createElement(
+          "div",
+          { className: "col-sm-8 text-center" },
+          React.createElement(
+            "p",
+            { className: "lead" },
+            "Upgrade by 5 mining power"
+          ),
+          React.createElement(
+            "p",
+            null,
+            React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+            ": ",
+            1000,
+            React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+            ": ",
+            80,
+            React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+            ": ",
+            8,
+            React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+            ": ",
+            0,
+            React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+            ": ",
+            0,
+            React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+            ": ",
+            0
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "col-sm-4 text-center upgrade-button" },
+          React.createElement(
+            "form",
+            { id: "upgradeForm5", onSubmit: function onSubmit(e) {
+                e.preventDefault();handlePurchase(5);
+              }, name: "handlePurchaseForm", action: "/purchaseUpgrade", method: "POST" },
+            React.createElement(
+              "fieldset",
+              null,
+              React.createElement("input", { type: "hidden", name: "power", value: "5" }),
+              React.createElement("input", { type: "hidden", name: "iron", value: "1000" }),
+              React.createElement("input", { type: "hidden", name: "copper", value: "80" }),
+              React.createElement("input", { type: "hidden", name: "sapphire", value: "8" }),
+              React.createElement("input", { type: "hidden", name: "emerald", value: "" }),
+              React.createElement("input", { type: "hidden", name: "ruby", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "diamond", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "_csrf", value: props.csrf }),
+              React.createElement(
+                "button",
+                { type: "submit", className: "btn btn-success btn-sm btn-block" },
+                "Purchase"
+              )
+            )
+          )
+        )
+      ),
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "div",
+        { className: "row justify-content-center border border-info" },
+        React.createElement(
+          "div",
+          { className: "col-sm-8 text-center" },
+          React.createElement(
+            "p",
+            { className: "lead" },
+            "Upgrade by 25 mining power"
+          ),
+          React.createElement(
+            "p",
+            null,
+            React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+            ": ",
+            4000,
+            React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+            ": ",
+            320,
+            React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+            ": ",
+            24,
+            React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+            ": ",
+            4,
+            React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+            ": ",
+            0,
+            React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+            ": ",
+            0
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "col-sm-4 text-center upgrade-button" },
+          React.createElement(
+            "form",
+            { id: "upgradeForm25", onSubmit: function onSubmit(e) {
+                e.preventDefault();handlePurchase(25);
+              }, name: "handlePurchaseForm", action: "/purchaseUpgrade", method: "POST" },
+            React.createElement(
+              "fieldset",
+              null,
+              React.createElement("input", { type: "hidden", name: "power", value: "25" }),
+              React.createElement("input", { type: "hidden", name: "iron", value: "4000" }),
+              React.createElement("input", { type: "hidden", name: "copper", value: "320" }),
+              React.createElement("input", { type: "hidden", name: "sapphire", value: "24" }),
+              React.createElement("input", { type: "hidden", name: "emerald", value: "4" }),
+              React.createElement("input", { type: "hidden", name: "ruby", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "diamond", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "_csrf", value: props.csrf }),
+              React.createElement(
+                "button",
+                { type: "submit", className: "btn btn-success btn-sm btn-block" },
+                "Purchase"
+              )
+            )
+          )
+        )
+      ),
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "div",
+        { className: "row justify-content-center border border-info" },
+        React.createElement(
+          "div",
+          { className: "col-sm-8 text-center" },
+          React.createElement(
+            "p",
+            { className: "lead" },
+            "Upgrade by 100 mining power"
+          ),
+          React.createElement(
+            "p",
+            null,
+            React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+            ": ",
+            12000,
+            React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+            ": ",
+            1280,
+            React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+            ": ",
+            96,
+            React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+            ": ",
+            16,
+            React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+            ": ",
+            4,
+            React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+            ": ",
+            0
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "col-sm-4 text-center upgrade-button" },
+          React.createElement(
+            "form",
+            { id: "upgradeForm100", onSubmit: function onSubmit(e) {
+                e.preventDefault();handlePurchase(100);
+              }, name: "handlePurchaseForm", action: "/purchaseUpgrade", method: "POST" },
+            React.createElement(
+              "fieldset",
+              null,
+              React.createElement("input", { type: "hidden", name: "power", value: "100" }),
+              React.createElement("input", { type: "hidden", name: "iron", value: "12000" }),
+              React.createElement("input", { type: "hidden", name: "copper", value: "1280" }),
+              React.createElement("input", { type: "hidden", name: "sapphire", value: "96" }),
+              React.createElement("input", { type: "hidden", name: "emerald", value: "16" }),
+              React.createElement("input", { type: "hidden", name: "ruby", value: "4" }),
+              React.createElement("input", { type: "hidden", name: "diamond", value: "0" }),
+              React.createElement("input", { type: "hidden", name: "_csrf", value: props.csrf }),
+              React.createElement(
+                "button",
+                { type: "submit", className: "btn btn-success btn-sm btn-block" },
+                "Purchase"
+              )
+            )
+          )
+        )
+      ),
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "div",
+        { className: "row justify-content-center border border-info" },
+        React.createElement(
+          "div",
+          { className: "col-sm-8 text-center" },
+          React.createElement(
+            "p",
+            { className: "lead" },
+            "Upgrade by 250 mining power"
+          ),
+          React.createElement(
+            "p",
+            null,
+            React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+            ": ",
+            48000,
+            React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+            ": ",
+            5120,
+            React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+            ": ",
+            384,
+            React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+            ": ",
+            64,
+            React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+            ": ",
+            16,
+            React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+            ": ",
+            2
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "col-sm-4 text-center upgrade-button" },
+          React.createElement(
+            "form",
+            { id: "upgradeForm250", onSubmit: function onSubmit(e) {
+                e.preventDefault();handlePurchase(250);
+              }, name: "handlePurchaseForm", action: "/purchaseUpgrade", method: "POST" },
+            React.createElement(
+              "fieldset",
+              null,
+              React.createElement("input", { type: "hidden", name: "power", value: "250" }),
+              React.createElement("input", { type: "hidden", name: "iron", value: "48000" }),
+              React.createElement("input", { type: "hidden", name: "copper", value: "5120" }),
+              React.createElement("input", { type: "hidden", name: "sapphire", value: "384" }),
+              React.createElement("input", { type: "hidden", name: "emerald", value: "64" }),
+              React.createElement("input", { type: "hidden", name: "ruby", value: "16" }),
+              React.createElement("input", { type: "hidden", name: "diamond", value: "2" }),
+              React.createElement("input", { type: "hidden", name: "_csrf", value: props.csrf }),
+              React.createElement(
+                "button",
+                { type: "submit", className: "btn btn-success btn-sm btn-block" },
+                "Purchase"
+              )
+            )
+          )
+        )
+      ),
+      React.createElement("hr", { className: "my-4" }),
+      React.createElement(
+        "div",
+        { className: "row justify-content-center border border-info" },
+        React.createElement(
+          "div",
+          { className: "col-sm-8 text-center" },
+          React.createElement(
+            "p",
+            { className: "lead" },
+            "Upgrade by 500 mining power"
+          ),
+          React.createElement(
+            "p",
+            null,
+            React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+            ": ",
+            174000,
+            React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+            ": ",
+            20480,
+            React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+            ": ",
+            1536,
+            React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+            ": ",
+            256,
+            React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+            ": ",
+            96,
+            React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+            ": ",
+            8
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "col-sm-4 text-center upgrade-button" },
+          React.createElement(
+            "form",
+            { id: "upgradeForm500", onSubmit: function onSubmit(e) {
+                e.preventDefault();handlePurchase(500);
+              }, name: "handlePurchaseForm", action: "/purchaseUpgrade", method: "POST" },
+            React.createElement(
+              "fieldset",
+              null,
+              React.createElement("input", { type: "hidden", name: "power", value: "500" }),
+              React.createElement("input", { type: "hidden", name: "iron", value: "174000" }),
+              React.createElement("input", { type: "hidden", name: "copper", value: "20480" }),
+              React.createElement("input", { type: "hidden", name: "sapphire", value: "1536" }),
+              React.createElement("input", { type: "hidden", name: "emerald", value: "256" }),
+              React.createElement("input", { type: "hidden", name: "ruby", value: "96" }),
+              React.createElement("input", { type: "hidden", name: "diamond", value: "8" }),
+              React.createElement("input", { type: "hidden", name: "_csrf", value: props.csrf }),
+              React.createElement(
+                "button",
+                { type: "submit", className: "btn btn-success btn-sm btn-block" },
+                "Purchase"
+              )
+            )
+          )
+        )
+      )
     )
   );
 };
@@ -3267,7 +3679,9 @@ var renderMarket = function renderMarket() {
 
 //Render the upgrade view (players purchase mining upgrades
 var renderUpgrades = function renderUpgrades() {
-  ReactDOM.render(React.createElement(UpgradesWindow, null), document.querySelector("#main"));
+  getTokenWithCallback(function (csrfToken) {
+    ReactDOM.render(React.createElement(UpgradesWindow, { csrf: csrfToken }), document.querySelector("#main"));
+  });
 };
 
 //Render the highscores view (players compare scores)

@@ -215,7 +215,7 @@ const init = (ioInstance) => {
 
     // Process clicks sent to the server
     socket.on('click', (data) => {
-      miner.game.addClick(socket.roomJoined, data.mouse);
+      miner.game.addClick(socket.roomJoined, data.mouse, socket.handshake.session.account.power);
 
       io.sockets.in(socket.roomJoined).emit('click', { hash: socket.hash });
 
@@ -227,7 +227,7 @@ const init = (ioInstance) => {
           return;
         }
 
-        socket.sub.progress += 1;
+        socket.sub.progress += socket.handshake.session.account.power;
 
         // If the sub contract is complete
         if (socket.sub.progress >= socket.sub.clicks) {

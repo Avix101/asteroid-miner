@@ -33,6 +33,10 @@ const AccountSchema = new mongoose.Schema({
     type: Object,
     required: true,
   },
+  power: {
+    type: Number,
+    default: 1,
+  },
   contracts: {
     type: Array,
     required: true,
@@ -48,6 +52,7 @@ AccountSchema.statics.toAPI = doc => ({
   username: doc.username,
   bank: doc.bank,
   _id: doc._id,
+  power: doc.power,
 });
 
 // Validate a user's password

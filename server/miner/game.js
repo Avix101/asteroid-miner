@@ -31,9 +31,9 @@ const processClicks = (/* players, io */) => {
   for (let i = 0; i < gameKeys.length; i++) {
     const game = getGame(gameKeys[i]);
     for (let z = 0; z < game.clicks.length; z++) { // Bounding rect should depend on asteroid
-      if (physicsHandler.checkIfClicked(game.clicks[z], Asteroid.getBoundingRect())) {
+      if (physicsHandler.checkIfClicked(game.clicks[z].click, Asteroid.getBoundingRect())) {
         console.log('clicked');
-        game.asteroid.mine(1);
+        game.asteroid.mine(game.clicks[z].power);
       }
 
       game.clicks.splice(z);
@@ -54,13 +54,13 @@ const sendUpdates = (sendData) => {
   }
 };
 
-const addClick = (roomId, click) => {
+const addClick = (roomId, click, power) => {
   if (!hasGame(roomId)) {
     return false;
   }
 
   const game = getGame(roomId);
-  game.clicks.push(click);
+  game.clicks.push({ click, power });
   return true;
   // clicks.push(click);
 };

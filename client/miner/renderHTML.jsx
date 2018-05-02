@@ -179,6 +179,15 @@ const handleMarketSubmit = (e) => {
   return false;
 };
 
+const handlePurchase = (power) => {
+  sendAjax('POST', $(`#upgradeForm${power}`).attr("action"), $(`#upgradeForm${power}`).serialize(), (data) => {
+    handleSuccess(data.message);
+    socket.emit('getMyBankData');
+    loadView();
+  });
+    return false;
+};
+
 // Buy a contract as a partner one
 const purchaseAsPartnerContract = (e) => {
   const asteroidClass = e.target.getAttribute('data-purchase');
@@ -703,6 +712,189 @@ const UpgradesWindow = (props) => {
         <h1 className="display-3">Mining Upgrades:</h1>
         <p className="lead">Purchase these to make mining easier!</p>
         <hr className="my-4" />
+        <div className ="row justify-content-center">
+            <p>
+                <img width="25" height="25" src={ironIcon.src} alt="" /> Iron: {account.bank.iron}
+                <img width="25" height="25" src={copperIcon.src} alt="" /> Copper: {account.bank.copper}
+                <img width="25" height="25" src={sapphireIcon.src} alt="" /> Sapphires: {account.bank.sapphire}
+                <img width="25" height="25" src={emeraldIcon.src} alt="" /> Emeralds: {account.bank.emerald}
+                <img width="25" height="25" src={rubyIcon.src} alt="" /> Rubies: {account.bank.ruby}
+                <img width="25" height="25" src={diamondIcon.src} alt="" /> Diamonds: {account.bank.diamond}
+            </p>
+        </div>  
+        <div className="row justify-content-center border border-info">
+            <div className="col-sm-8 text-center">
+                <p className="lead">Upgrade by 1 mining power</p>
+                <p>
+                    <img width="25" height="25" src={ironIcon.src} alt="" />: {250} 
+                    <img width="25" height="25" src={copperIcon.src} alt="" />: {20} 
+                    <img width="25" height="25" src={sapphireIcon.src} alt="" />: {2} 
+                    <img width="25" height="25" src={emeraldIcon.src} alt="" />: {0} 
+                    <img width="25" height="25" src={rubyIcon.src} alt="" />: {0} 
+                    <img width="25" height="25" src={diamondIcon.src} alt="" />: {0} 
+                </p>
+            </div>
+            <div className="col-sm-4 text-center upgrade-button">
+                <form id="upgradeForm1" onSubmit={(e) => {e.preventDefault(); handlePurchase(1);}} name="handlePurchaseForm" action="/purchaseUpgrade" method="POST">
+                    <fieldset>
+                        <input type="hidden" name="power" value="1"></input>
+                        <input type="hidden" name="iron" value="250"></input>
+                        <input type="hidden" name="copper" value="20"></input>
+                        <input type="hidden" name="sapphire" value="2"></input>
+                        <input type="hidden" name="emerald" value="0"></input>
+                        <input type="hidden" name="ruby" value="0"></input>
+                        <input type="hidden" name="diamond" value="0"></input>
+                        <input type="hidden" name="_csrf" value={props.csrf}></input>
+                        <button type="submit" className="btn btn-success btn-sm btn-block">Purchase</button>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+        <hr className="my-4" />
+        <div className="row justify-content-center border border-info">
+            <div className="col-sm-8 text-center">
+                <p className="lead">Upgrade by 5 mining power</p>
+                <p>
+                    <img width="25" height="25" src={ironIcon.src} alt="" />: {1000} 
+                    <img width="25" height="25" src={copperIcon.src} alt="" />: {80} 
+                    <img width="25" height="25" src={sapphireIcon.src} alt="" />: {8} 
+                    <img width="25" height="25" src={emeraldIcon.src} alt="" />: {0} 
+                    <img width="25" height="25" src={rubyIcon.src} alt="" />: {0} 
+                    <img width="25" height="25" src={diamondIcon.src} alt="" />: {0} 
+                </p>
+            </div>
+            <div className="col-sm-4 text-center upgrade-button">
+                <form id="upgradeForm5" onSubmit={(e) => {e.preventDefault(); handlePurchase(5);}} name="handlePurchaseForm" action="/purchaseUpgrade" method="POST">
+                    <fieldset>
+                        <input type="hidden" name="power" value="5"></input>
+                        <input type="hidden" name="iron" value="1000"></input>
+                        <input type="hidden" name="copper" value="80"></input>
+                        <input type="hidden" name="sapphire" value="8"></input>
+                        <input type="hidden" name="emerald" value=""></input>
+                        <input type="hidden" name="ruby" value="0"></input>
+                        <input type="hidden" name="diamond" value="0"></input>
+                        <input type="hidden" name="_csrf" value={props.csrf}></input>
+                        <button type="submit" className="btn btn-success btn-sm btn-block">Purchase</button>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+        <hr className="my-4" />
+        <div className="row justify-content-center border border-info">
+            <div className="col-sm-8 text-center">
+                <p className="lead">Upgrade by 25 mining power</p>
+                <p>
+                    <img width="25" height="25" src={ironIcon.src} alt="" />: {4000} 
+                    <img width="25" height="25" src={copperIcon.src} alt="" />: {320} 
+                    <img width="25" height="25" src={sapphireIcon.src} alt="" />: {24} 
+                    <img width="25" height="25" src={emeraldIcon.src} alt="" />: {4} 
+                    <img width="25" height="25" src={rubyIcon.src} alt="" />: {0} 
+                    <img width="25" height="25" src={diamondIcon.src} alt="" />: {0} 
+                </p>
+            </div>
+            <div className="col-sm-4 text-center upgrade-button">
+                <form id="upgradeForm25" onSubmit={(e) => {e.preventDefault(); handlePurchase(25);}} name="handlePurchaseForm" action="/purchaseUpgrade" method="POST">
+                    <fieldset>
+                        <input type="hidden" name="power" value="25"></input>
+                        <input type="hidden" name="iron" value="4000"></input>
+                        <input type="hidden" name="copper" value="320"></input>
+                        <input type="hidden" name="sapphire" value="24"></input>
+                        <input type="hidden" name="emerald" value="4"></input>
+                        <input type="hidden" name="ruby" value="0"></input>
+                        <input type="hidden" name="diamond" value="0"></input>
+                        <input type="hidden" name="_csrf" value={props.csrf}></input>
+                        <button type="submit" className="btn btn-success btn-sm btn-block">Purchase</button>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+        <hr className="my-4" />
+        <div className="row justify-content-center border border-info">
+            <div className="col-sm-8 text-center">
+                <p className="lead">Upgrade by 100 mining power</p>
+                <p>
+                    <img width="25" height="25" src={ironIcon.src} alt="" />: {12000} 
+                    <img width="25" height="25" src={copperIcon.src} alt="" />: {1280} 
+                    <img width="25" height="25" src={sapphireIcon.src} alt="" />: {96} 
+                    <img width="25" height="25" src={emeraldIcon.src} alt="" />: {16} 
+                    <img width="25" height="25" src={rubyIcon.src} alt="" />: {4} 
+                    <img width="25" height="25" src={diamondIcon.src} alt="" />: {0} 
+                </p>
+            </div>
+            <div className="col-sm-4 text-center upgrade-button">
+                <form id="upgradeForm100" onSubmit={(e) => {e.preventDefault(); handlePurchase(100);}} name="handlePurchaseForm" action="/purchaseUpgrade" method="POST">
+                    <fieldset>
+                        <input type="hidden" name="power" value="100"></input>
+                        <input type="hidden" name="iron" value="12000"></input>
+                        <input type="hidden" name="copper" value="1280"></input>
+                        <input type="hidden" name="sapphire" value="96"></input>
+                        <input type="hidden" name="emerald" value="16"></input>
+                        <input type="hidden" name="ruby" value="4"></input>
+                        <input type="hidden" name="diamond" value="0"></input>
+                        <input type="hidden" name="_csrf" value={props.csrf}></input>
+                        <button type="submit" className="btn btn-success btn-sm btn-block">Purchase</button>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+        <hr className="my-4" />
+        <div className="row justify-content-center border border-info">
+            <div className="col-sm-8 text-center">
+                <p className="lead">Upgrade by 250 mining power</p>
+                <p>
+                    <img width="25" height="25" src={ironIcon.src} alt="" />: {48000} 
+                    <img width="25" height="25" src={copperIcon.src} alt="" />: {5120} 
+                    <img width="25" height="25" src={sapphireIcon.src} alt="" />: {384} 
+                    <img width="25" height="25" src={emeraldIcon.src} alt="" />: {64} 
+                    <img width="25" height="25" src={rubyIcon.src} alt="" />: {16} 
+                    <img width="25" height="25" src={diamondIcon.src} alt="" />: {2} 
+                </p>
+            </div>
+            <div className="col-sm-4 text-center upgrade-button">
+                <form id="upgradeForm250" onSubmit={(e) => {e.preventDefault(); handlePurchase(250);}} name="handlePurchaseForm" action="/purchaseUpgrade" method="POST">
+                    <fieldset>
+                        <input type="hidden" name="power" value="250"></input>
+                        <input type="hidden" name="iron" value="48000"></input>
+                        <input type="hidden" name="copper" value="5120"></input>
+                        <input type="hidden" name="sapphire" value="384"></input>
+                        <input type="hidden" name="emerald" value="64"></input>
+                        <input type="hidden" name="ruby" value="16"></input>
+                        <input type="hidden" name="diamond" value="2"></input>
+                        <input type="hidden" name="_csrf" value={props.csrf}></input>
+                        <button type="submit" className="btn btn-success btn-sm btn-block">Purchase</button>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+        <hr className="my-4" />
+        <div className="row justify-content-center border border-info">
+            <div className="col-sm-8 text-center">
+                <p className="lead">Upgrade by 500 mining power</p>
+                <p>
+                    <img width="25" height="25" src={ironIcon.src} alt="" />: {174000} 
+                    <img width="25" height="25" src={copperIcon.src} alt="" />: {20480} 
+                    <img width="25" height="25" src={sapphireIcon.src} alt="" />: {1536} 
+                    <img width="25" height="25" src={emeraldIcon.src} alt="" />: {256} 
+                    <img width="25" height="25" src={rubyIcon.src} alt="" />: {96} 
+                    <img width="25" height="25" src={diamondIcon.src} alt="" />: {8} 
+                </p>
+            </div>
+            <div className="col-sm-4 text-center upgrade-button">
+                <form id="upgradeForm500" onSubmit={(e) => {e.preventDefault(); handlePurchase(500);}} name="handlePurchaseForm" action="/purchaseUpgrade" method="POST">
+                    <fieldset>
+                        <input type="hidden" name="power" value="500"></input>
+                        <input type="hidden" name="iron" value="174000"></input>
+                        <input type="hidden" name="copper" value="20480"></input>
+                        <input type="hidden" name="sapphire" value="1536"></input>
+                        <input type="hidden" name="emerald" value="256"></input>
+                        <input type="hidden" name="ruby" value="96"></input>
+                        <input type="hidden" name="diamond" value="8"></input>
+                        <input type="hidden" name="_csrf" value={props.csrf}></input>
+                        <button type="submit" className="btn btn-success btn-sm btn-block">Purchase</button>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
       </div>
     </div>
   );
@@ -1426,10 +1618,12 @@ const renderMarket = () => {
 
 //Render the upgrade view (players purchase mining upgrades
 const renderUpgrades = () => {
-  ReactDOM.render(
-    <UpgradesWindow />,
-    document.querySelector("#main")
-  );
+    getTokenWithCallback((csrfToken) => {
+        ReactDOM.render(
+            <UpgradesWindow csrf={csrfToken} />,
+            document.querySelector("#main")
+        );
+    });
 };
 
 //Render the highscores view (players compare scores)

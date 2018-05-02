@@ -341,6 +341,54 @@ const sellResources = (request, response) => {
   });
 };
 
+const purchaseUpgrades = (request, response) => {
+  const req = request;
+  const res = response;
+
+  Account.AccountModel.findById(req.session.account._id, (err, acc) => {
+    if (err || !acc) {
+      return res.status(400).json({ error: 'Could not find your account' });
+    }
+
+    const account = acc;
+
+    // Subtract resources
+    account.bank.iron -= req.body.iron;
+    account.bank.copper -= req.body.copper;
+    account.bank.sapphire -= req.body.sapphire;
+    account.bank.emerald -= req.body.emerald;
+    account.bank.ruby -= req.body.ruby;
+    account.bank.diamond -= req.body.diamond;
+
+    // Verify account is not negative
+    if (
+      account.bank.iron < 0 ||
+      account.bank.copper < 0 ||
+      account.bank.sapphire < 0 ||
+      account.bank.emerald < 0 ||
+      account.bank.ruby < 0 ||
+      account.bank.diamond < 0
+    ) {
+      return res.status(400).json({ error: "You don't have that many resources for the upgrades" });
+    }
+
+    account.power += parseInt(req.body.power, 10);
+
+    account.markModified('bank');
+    account.markModified('power');
+    const savePromise = account.save();
+
+    savePromise.then(() => {
+      req.session.account = Account.AccountModel.toAPI(account);
+      res.status(201).json({ message: 'Upgrade successful' });
+    });
+
+    return savePromise.catch(() => {
+      res.status(500).json({ message: 'Upgrade could not be completed' });
+    });
+  });
+};
+
 const joinContractAsPartner = (request, response) => {
   const req = request;
   const res = response;
@@ -571,6 +619,7 @@ module.exports = {
   getMyContracts,
   buyAsteroid,
   sellResources,
+  purchaseUpgrades,
   acceptSubContract,
   buyPartnerAsteroid,
   createSubContract,
