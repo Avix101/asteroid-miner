@@ -17,23 +17,15 @@ const setGame = (roomId, game) => {
   games[roomId] = game;
 };
 
-// const clicks = [];
-// const asteroids = [];
-
-const processClicks = (/* players, io */) => {
-  // players will be used to cross reference hashes later and io to emit later...
-  // Delete when we finally implement players and io
-  /* console.log(players);
-  console.log(io); */
-
+const processClicks = (finishCallback, partnerCallback) => {
   const gameKeys = Object.keys(games);
 
+  // Process clicks for each game
   for (let i = 0; i < gameKeys.length; i++) {
     const game = getGame(gameKeys[i]);
     for (let z = 0; z < game.clicks.length; z++) { // Bounding rect should depend on asteroid
       if (physicsHandler.checkIfClicked(game.clicks[z].click, Asteroid.getBoundingRect())) {
-        console.log('clicked');
-        game.asteroid.mine(game.clicks[z].power);
+        game.asteroid.mine(game.clicks[z].power, finishCallback, partnerCallback);
       }
 
       game.clicks.splice(z);
@@ -54,6 +46,7 @@ const sendUpdates = (sendData) => {
   }
 };
 
+// Add clicks to an asteroid
 const addClick = (roomId, click, power) => {
   if (!hasGame(roomId)) {
     return false;
@@ -62,9 +55,9 @@ const addClick = (roomId, click, power) => {
   const game = getGame(roomId);
   game.clicks.push({ click, power });
   return true;
-  // clicks.push(click);
 };
 
+// Create a new game room / instance of the asteroid
 const createGame = (roomId) => {
   if (hasGame(roomId)) {
     return false;
@@ -76,6 +69,7 @@ const createGame = (roomId) => {
   return true;
 };
 
+// Retrieve the asteroid from an existing game room
 const getAsteroid = (roomId) => {
   if (!hasGame(roomId)) {
     return null;
@@ -85,8 +79,8 @@ const getAsteroid = (roomId) => {
   return game.asteroid.getBundledData();
 };
 
+// Generate the asteroid for a new game room
 const generateAsteroid = (roomId, contract, callback) => {
-  console.log(contract);
   const newAsteroid = new Asteroid(roomId, contract, false);
   const game = getGame(roomId);
 

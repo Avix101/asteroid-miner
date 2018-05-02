@@ -784,7 +784,10 @@ var init = function init() {
 
   //Update this every so often (can't be done via sockets, as the panel
   //reaches into various contracts (different game rooms)
-  setInterval(renderMyContractsPanel, 2000);
+  setInterval(function () {
+    renderMyContractsPanel();
+    socket.emit('getMyBankData');
+  }, 2000);
 
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
@@ -819,6 +822,9 @@ var init = function init() {
   socket.on('click', processPlayerClick);
   socket.on('asteroidUpdate', updateAsteroid);
   socket.on('subContractUpdate', updateSubContract);
+  socket.on('finishAsteroid', finishAsteroid);
+  socket.on('cancelSubContract', cancelSubContract);
+  socket.on('finishSubContract', finishSubContract);
   socket.on('noSub', stopSub);
   socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);
@@ -1052,6 +1058,7 @@ var handleSubContractSubmit = function handleSubContractSubmit(e) {
   sendAjax('POST', $("#subContractForm").attr("action"), $("#subContractForm").serialize(), function (data) {
     hideModal();
     handleSuccess(data.message);
+    socket.emit('getMyBankData');
     renderMyContractsPanel();
   });
 
@@ -1160,7 +1167,6 @@ var MySubContracts = function MySubContracts(props) {
 
 //Builds a list of contracts that the user owns
 var MyContracts = function MyContracts(props) {
-  console.dir(props.data);
   var subContracts = props.data.subContracts.map(function (contract, index) {
     return React.createElement(
       "li",
@@ -1472,11 +1478,9 @@ var BasicContracts = function BasicContracts(props) {
 
 //Construct a list of partner contracts
 var PartnerContracts = function PartnerContracts(props) {
-  console.log(props);
   var openContracts = props.contracts;
   var contracts = [];
 
-  console.log('openContracts length: ' + openContracts.length);
   for (var i = 0; i < openContracts.length; i++) {
     var contract = openContracts[i];
 
@@ -1680,7 +1684,7 @@ var compressNumber = function compressNumber(num) {
     num = Math.floor(num / 1000000) + "M";
   }
 
-  if (Number.isNaN(num)) {
+  if (Number.isNaN(num) || num === undefined) {
     num = 0;
   }
 
@@ -3621,6 +3625,74 @@ var ProgressPanel = function ProgressPanel(props) {
     );
   }
 
+  //Show recently attained resources if applicable
+  var asteroidRewards = void 0;
+  if (account.rewards) {
+    asteroidRewards = React.createElement(
+      "div",
+      null,
+      React.createElement(
+        "h1",
+        null,
+        "Recent Rewards"
+      ),
+      React.createElement(
+        "ul",
+        { className: "text-success" },
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: gbIcon.src, alt: "" }),
+          " GB: +",
+          compressNumber(account.rewards.gb)
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: ironIcon.src, alt: "" }),
+          " Iron: +",
+          compressNumber(account.rewards.iron)
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: copperIcon.src, alt: "" }),
+          " Copper: +",
+          compressNumber(account.rewards.copper)
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: sapphireIcon.src, alt: "" }),
+          " Sapphires: +",
+          compressNumber(account.rewards.sapphire)
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: emeraldIcon.src, alt: "" }),
+          " Emeralds: +",
+          compressNumber(account.rewards.emerald)
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: rubyIcon.src, alt: "" }),
+          " Rubies: +",
+          compressNumber(account.rewards.ruby)
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement("img", { width: "25", height: "25", src: diamondIcon.src, alt: "" }),
+          " Diamonds: +",
+          compressNumber(account.rewards.diamond)
+        )
+      ),
+      React.createElement("hr", null)
+    );
+  }
+
   //Render asteroid progress if applicable
   var asteroidProgress = void 0;
   var asteroidProgressWidth = void 0;
@@ -3700,6 +3772,7 @@ var ProgressPanel = function ProgressPanel(props) {
       "div",
       { className: "jumbotron" },
       userDetails,
+      asteroidRewards,
       asteroidProgress,
       subContractProgress
     )
@@ -3811,25 +3884,21 @@ var renderProgressPanel = function renderProgressPanel(current, total) {
 
 //Populate contract window with returned contracts
 var populateContractsWindow = function populateContractsWindow(data) {
-  //console.log(data);
   ReactDOM.render(React.createElement(BasicContracts, { contracts: data.basicContracts }), document.querySelector("#basicContracts"));
 };
 
 //Populate contract window with returned sub contracts
 var populateSubContractsWindow = function populateSubContractsWindow(data) {
-  console.log(data);
   ReactDOM.render(React.createElement(SubContracts, { contracts: data.subContracts }), document.querySelector("#subContracts"));
 };
 
 // To Do: Make PartnerContracts react object
 var populatePartnerContractsWindow = function populatePartnerContractsWindow(data) {
-  console.log(data.openContracts);
   ReactDOM.render(React.createElement(PartnerContracts, { contracts: data.openContracts }), document.querySelector("#partnerContracts"));
 };
 
 //Populate already owned contracts with data sent from server
 var populateMyContractsWindow = function populateMyContractsWindow(data) {
-  console.log(data);
   ReactDOM.render(React.createElement(MyContracts, { data: data }), document.querySelector("#myContracts"));
 };
 
@@ -3845,7 +3914,6 @@ var renderMyContractsPanel = function renderMyContractsPanel() {
 
   sendAjax('GET', '/getMyContracts', null, function (result) {
     availableContracts = result.contracts;
-    console.log(result);
     populateMyContractsWindow(result);
     populateMySubContractsWindow(result.ownedSubs);
   });
@@ -4114,6 +4182,9 @@ var spawnAsteroid = function spawnAsteroid(data) {
   players = [];
   subContract = null;
 
+  account.rewards = null;
+  delete account.rewards;
+
   renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
 
@@ -4146,9 +4217,31 @@ var updateSubContract = function updateSubContract(data) {
   }
 };
 
+//Process a request from the server to finish an asteroid
+var finishAsteroid = function finishAsteroid(data) {
+  asteroid = null;
+
+  account.rewards = data.rewards;
+  socket.emit('getMyBankData');
+};
+
+//Process a request from the server to finish a sub contract
+var finishSubContract = function finishSubContract(data) {
+  subContract = null;
+  account.rewards = data.rewards;
+  socket.emit('getMyBankData');
+};
+
+//Process a request from the server to cancel a sub contract
+var cancelSubContract = function cancelSubContract() {
+  handleError('Your sub contract is now void because you did not complete the required number of clicks in time.');
+};
+
 //Process a request from the server to switch from a sub to a non sub contract
 var stopSub = function stopSub() {
   subContract = null;
+  account.rewards = null;
+  delete account.rewards;
 };
 
 //Process a request from the server to update the player's account details

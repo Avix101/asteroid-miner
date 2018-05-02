@@ -176,7 +176,6 @@ const getGalaxyBucks = (request, response) => {
 
     savePromise.then(() => {
       req.session.account = Account.AccountModel.toAPI(account);
-      console.log(req.session.account);
       res.status(200).json({ message: `${gb} Galaxy Bucks have been credited to your account` });
     });
 

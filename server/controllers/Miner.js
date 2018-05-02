@@ -176,8 +176,6 @@ const getMyContracts = (req, res) =>
       contracts = results.map(contract => ({
         contractId: contract._id,
         asteroid: Asteroid.getBundledDataFor(contract.asteroid),
-        partners: contract.partners.length,
-        subContractors: contract.subContractors.length,
       }));
     }
 
@@ -284,8 +282,6 @@ const buyAsteroid = (request, response) => {
 
       const contractData = {
         ownerId: req.session.account._id,
-        partners: [],
-        subContractors: [],
         asteroid: newAsteroid,
       };
 

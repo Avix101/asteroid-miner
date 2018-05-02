@@ -194,6 +194,9 @@ const spawnAsteroid = (data) => {
   players = [];
   subContract = null;
   
+  account.rewards = null;
+  delete account.rewards;
+  
   renderProgressPanel(asteroid.progress, asteroid.toughness);
 };
 
@@ -226,9 +229,31 @@ const updateSubContract = (data) => {
   }
 };
 
+//Process a request from the server to finish an asteroid
+const finishAsteroid = (data) => {
+  asteroid = null;
+  
+  account.rewards = data.rewards;
+  socket.emit('getMyBankData');
+};
+
+//Process a request from the server to finish a sub contract
+const finishSubContract = (data) => {
+  subContract = null;
+  account.rewards = data.rewards;
+  socket.emit('getMyBankData');
+};
+
+//Process a request from the server to cancel a sub contract
+const cancelSubContract = () => {
+  handleError('Your sub contract is now void because you did not complete the required number of clicks in time.');
+};
+
 //Process a request from the server to switch from a sub to a non sub contract
 const stopSub = () => {
   subContract = null;
+  account.rewards = null;
+  delete account.rewards;
 }
 
 //Process a request from the server to update the player's account details

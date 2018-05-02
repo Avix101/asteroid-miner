@@ -138,7 +138,10 @@ const init = () => {
   
   //Update this every so often (can't be done via sockets, as the panel
   //reaches into various contracts (different game rooms)
-  setInterval(renderMyContractsPanel, 2000);
+  setInterval(() => {
+    renderMyContractsPanel();
+    socket.emit('getMyBankData');
+  }, 2000);
   
   //Grab static images included in client page download
   //e.g. variable = document.querySelector("#imageId");
@@ -173,6 +176,9 @@ const init = () => {
   socket.on('click', processPlayerClick);
   socket.on('asteroidUpdate', updateAsteroid);
   socket.on('subContractUpdate', updateSubContract);
+  socket.on('finishAsteroid', finishAsteroid);
+  socket.on('cancelSubContract', cancelSubContract);
+  socket.on('finishSubContract', finishSubContract);
   socket.on('noSub', stopSub);
   socket.on('accountUpdate', updateAccount);
   socket.on('successMessage', processSocketSuccess);

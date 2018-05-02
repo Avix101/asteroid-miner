@@ -10,14 +10,6 @@ const ContractSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
-  partners: {
-    type: Array,
-    required: true,
-  },
-  subContractors: {
-    type: Array,
-    required: true,
-  },
   asteroid: {
     type: Object,
     required: true,

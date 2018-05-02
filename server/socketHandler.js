@@ -42,10 +42,18 @@ const joinGame = (sock, id) => {
       }
 
       // Ensure that this client owns the requested contract
-      if (socket.handshake.session.account._id.toString() !== contract.ownerId.toString()) {
+      if (contract.subContractorId) {
+        if (socket.handshake.session.account._id.toString()
+          !== contract.subContractorId.toString()
+        ) {
+          socket.emit('errorMessage', { error: 'You do not own that sub contract' });
+          return;
+        }
+      } else if (socket.handshake.session.account._id.toString() !== contract.ownerId.toString()) {
         socket.emit('errorMessage', { error: 'You do not own that contract' });
         return;
       }
+
 
       // Avoid rapidly jumping into the same room
       if (socket.roomJoined.toString() === id.toString()) {
@@ -153,22 +161,24 @@ const joinPartnerGame = (sock, id) => {
 };
 
 // Limits for sockets
-const DDOS = 1000;
+// const DDOS = 1000;
 const TOO_MANY_CLICKS = 50;
 
 // Keeps track of # of socket requests
-let requestCounter = {};
+// let requestCounter = {};
 let clickCounter = {};
 
 // Checks and clears the rate limiter every 1000ms
-const checkRateLimiter = () => {
+/* const checkRateLimiter = () => {
   const socketKeys = Object.keys(requestCounter);
   for (let i = 0; i < socketKeys.length; i++) {
     const key = socketKeys[i];
     if (requestCounter[key] > DDOS) {
       if (io.sockets.connected[key]) {
         io.sockets.connected[key].emit('errorMessage', {
-          error: 'DDOS attack detected. This is a serious violation. Connection broken by angry server gods.',
+          error:
+          'DDOS attack detected. This is a serious violation.
+          Connection broken by angry server gods.',
         });
         io.sockets.connected[key].disconnect();
       }
@@ -176,8 +186,9 @@ const checkRateLimiter = () => {
   }
 
   requestCounter = {};
-};
+}; */
 
+// Checks and clears the click limiter every 1000ms
 const checkClickLimiter = () => {
   const socketKeys = Object.keys(clickCounter);
   for (let i = 0; i < socketKeys.length; i++) {
@@ -195,8 +206,9 @@ const checkClickLimiter = () => {
   clickCounter = {};
 };
 
+// Run both checks every second
 setInterval(() => {
-  checkRateLimiter();
+  // checkRateLimiter();
   checkClickLimiter();
 }, 1000);
 
@@ -208,7 +220,7 @@ const init = (ioInstance) => {
     const socket = sock;
 
     // General rate limiter for sockets
-    socket.use((packet, next) => {
+    /* socket.use((packet, next) => {
       if (!requestCounter[socket.id]) {
         requestCounter[socket.id] = 1;
       } else {
@@ -216,7 +228,7 @@ const init = (ioInstance) => {
       }
 
       next();
-    });
+    }); */
 
     // Create a new hash for the connected client
     const time = new Date().getTime();
@@ -362,6 +374,7 @@ const init = (ioInstance) => {
               socket.emit('successMessage', {
                 message: 'Sub contract completed! Rewards have been credited to your account',
               });
+              socket.emit('finishSubContract', { rewards: socket.sub.rewards });
               socket.sub.remove();
               socket.sub = null;
             });
@@ -420,9 +433,54 @@ const init = (ioInstance) => {
   });
 };
 
+// Complete an asteroid and notify users
+const finishAsteroid = (contractId, contract) => {
+  // Iterate through clients connected to the room (id = contractId)
+  const clients = io.sockets.adapter.rooms[contractId];
+  const socketIds = Object.keys(clients.sockets);
+  for (let i = 0; i < socketIds.length; i++) {
+    const clientId = socketIds[i];
+
+    if (io.sockets.connected[clientId]) {
+      const client = io.sockets.connected[clientId];
+      if (client.handshake.session.account._id.toString()
+        === contract.ownerId.toString()
+      ) {
+        client.emit('finishAsteroid', { rewards: contract.asteroid.rewards });
+      } else {
+        client.emit('cancelSubContract');
+        client.sub = null;
+      }
+    }
+  }
+};
+
+// Complete a partner contract / asteroid and notify users
+const finishPartnerAsteroid = (contractId, id, rewards) => {
+  // Iterate through clients connected to the room (id = contractId)
+  const clients = io.sockets.adapter.rooms[contractId];
+  const socketIds = Object.keys(clients.sockets);
+  for (let i = 0; i < socketIds.length; i++) {
+    const clientId = socketIds[i];
+
+    if (io.sockets.connected[clientId]) {
+      const client = io.sockets.connected[clientId];
+      if (client.handshake.session.account._id.toString()
+        === id.toString()
+      ) {
+        client.emit('finishAsteroid', { rewards });
+      }
+    }
+  }
+};
+
 // Update all existing games
 const updateGames = () => {
-  miner.game.processClicks();
+  miner.game.processClicks((contractId, contract) => {
+    finishAsteroid(contractId, contract);
+  }, (contractId, id, rewards) => {
+    finishPartnerAsteroid(contractId, id, rewards);
+  });
 
   miner.game.sendUpdates((roomId, data) => {
     io.sockets.in(roomId).emit('asteroidUpdate', { asteroid: data });

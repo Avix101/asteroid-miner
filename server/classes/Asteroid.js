@@ -83,7 +83,7 @@ class Asteroid {
   }
 
   // Distribute the rewards when the asteroid is finished
-  distributeRewards() {
+  distributeRewards(finishCallback, partnerCallback) {
     const shares = {};
 
     // Find the owner account and give them their rewards
@@ -95,8 +95,6 @@ class Asteroid {
       const account = acc;
       const rewardKeys = Object.keys(this.rewards);
 
-      console.dir(this.contract._doc);
-
       // If it's not a partner contract then it is a regular
       // contract with the possibility for sub-contracts.
       if (!this.contract._doc.partners) {
@@ -105,7 +103,10 @@ class Asteroid {
           const key = rewardKeys[i];
           account.bank[key] += this.rewards[key];
         }
-        console.log('Sub Contract');
+
+        // Update clients
+        finishCallback(this.contract._id, this.contract);
+
         return SubContract.SubContractModel.findSubContractsOf(
           this.contract._id,
           (er2, subContracts) => {
@@ -166,15 +167,18 @@ class Asteroid {
             return;
           }
 
-          console.log(partnerAcc);
-
           const partnerAccount = partnerAcc;
+
+          const rewards = {};
 
           for (let z = 0; z < rewardKeys.length; z++) {
             const key = rewardKeys[z];
+            rewards[key] = Math.ceil(this.rewards[key] * (shares[shareKey].shares / 4));
             partnerAccount.bank[key] +=
                 Math.ceil(this.rewards[key] * (shares[shareKey].shares / 4));
           }
+
+          partnerCallback(this.contract._id, partnerAcc._id, rewards);
 
           partnerAccount.markModified('bank');
           partnerAccount.save();
@@ -188,7 +192,7 @@ class Asteroid {
 
 
   // Mine an asteroid by a given amount (progress towards completion)
-  mine(amount) {
+  mine(amount, finishCallback, partnerCallback) {
     // Don't allow rewards to be distributed twice
     if (this.progress >= this.toughness) {
       return;
@@ -198,7 +202,7 @@ class Asteroid {
 
     if (this.progress >= this.toughness) {
       this.progress = this.toughness;
-      this.distributeRewards();
+      this.distributeRewards(finishCallback, partnerCallback);
     } else {
       this.save();
     }

@@ -160,6 +160,7 @@ const handleSubContractSubmit = (e) => {
   sendAjax('POST', $("#subContractForm").attr("action"), $("#subContractForm").serialize(), (data) => {
     hideModal();
     handleSuccess(data.message);
+    socket.emit('getMyBankData');
     renderMyContractsPanel();
   });
   
@@ -242,7 +243,6 @@ const MySubContracts = (props) => {
 
 //Builds a list of contracts that the user owns
 const MyContracts = (props) => {
-  console.dir(props.data);
   const subContracts = props.data.subContracts.map((contract, index) => {
     return (
       <li className="list-group-item d-flex">
@@ -403,11 +403,9 @@ const BasicContracts = (props) => {
 
 //Construct a list of partner contracts
 const PartnerContracts = (props) => {
-    console.log(props);
   const openContracts = props.contracts;    
   const contracts = [];
-    
-    console.log('openContracts length: ' + openContracts.length);
+  
   for(let i = 0; i < openContracts.length; i++){
     const contract = openContracts[i];
 
@@ -523,7 +521,7 @@ const compressNumber = (num) => {
     num = `${Math.floor(num / 1000000)}M`;
   }
   
-  if(Number.isNaN(num)){
+  if(Number.isNaN(num) || num === undefined){
     num = 0;
   }
   
@@ -1450,6 +1448,26 @@ const ProgressPanel = (props) => {
     );
   }
   
+  //Show recently attained resources if applicable
+  let asteroidRewards;
+  if(account.rewards){
+    asteroidRewards = (
+      <div>
+        <h1>Recent Rewards</h1>
+        <ul className="text-success">
+          <li><img width="25" height="25" src={gbIcon.src} alt="" /> GB: +{compressNumber(account.rewards.gb)}</li>
+          <li><img width="25" height="25" src={ironIcon.src} alt="" /> Iron: +{compressNumber(account.rewards.iron)}</li>
+          <li><img width="25" height="25" src={copperIcon.src} alt="" /> Copper: +{compressNumber(account.rewards.copper)}</li>
+          <li><img width="25" height="25" src={sapphireIcon.src} alt="" /> Sapphires: +{compressNumber(account.rewards.sapphire)}</li>
+          <li><img width="25" height="25" src={emeraldIcon.src} alt="" /> Emeralds: +{compressNumber(account.rewards.emerald)}</li>
+          <li><img width="25" height="25" src={rubyIcon.src} alt="" /> Rubies: +{compressNumber(account.rewards.ruby)}</li>
+          <li><img width="25" height="25" src={diamondIcon.src} alt="" /> Diamonds: +{compressNumber(account.rewards.diamond)}</li>
+        </ul>
+        <hr />
+      </div>
+    );
+  }
+  
   //Render asteroid progress if applicable
   let asteroidProgress;
   let asteroidProgressWidth;
@@ -1500,6 +1518,7 @@ const ProgressPanel = (props) => {
     <div className="container">
       <div className="jumbotron">
         {userDetails}
+        {asteroidRewards}
         {asteroidProgress}
         {subContractProgress}
       </div>
@@ -1628,7 +1647,6 @@ const renderProgressPanel = (current, total) => {
 
 //Populate contract window with returned contracts
 const populateContractsWindow = (data) => {
-  //console.log(data);
   ReactDOM.render(
     <BasicContracts contracts={data.basicContracts} />,
     document.querySelector("#basicContracts")
@@ -1637,7 +1655,6 @@ const populateContractsWindow = (data) => {
 
 //Populate contract window with returned sub contracts
 const populateSubContractsWindow = (data) => {
-  console.log(data);
   ReactDOM.render(
     <SubContracts contracts={data.subContracts} />,
     document.querySelector("#subContracts")
@@ -1646,7 +1663,6 @@ const populateSubContractsWindow = (data) => {
 
 // To Do: Make PartnerContracts react object
 const populatePartnerContractsWindow = (data) => {
-    console.log(data.openContracts);
     ReactDOM.render(
     <PartnerContracts contracts={data.openContracts} />,
     document.querySelector("#partnerContracts")
@@ -1655,7 +1671,6 @@ const populatePartnerContractsWindow = (data) => {
 
 //Populate already owned contracts with data sent from server
 const populateMyContractsWindow = (data) => {
-  console.log(data);
   ReactDOM.render(
     <MyContracts data={data} />,
     document.querySelector("#myContracts")
@@ -1680,7 +1695,6 @@ const renderMyContractsPanel = () => {
   
   sendAjax('GET', '/getMyContracts', null, (result) => {
     availableContracts = result.contracts;
-    console.log(result);
     populateMyContractsWindow(result);
     populateMySubContractsWindow(result.ownedSubs);
   });
