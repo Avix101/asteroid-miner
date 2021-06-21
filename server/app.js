@@ -31,7 +31,10 @@ const dbURL = process.env.MONGODB_URI || 'mongodb://localhost/AsteroidMiner';
 const redisSecret = process.env.REDIS_SECRET || 'verysecretkey';
 
 // Connect to Mongo DB using mongoose
-mongoose.connect(dbURL, { useNewUrlParser: true });
+mongoose.connect(dbURL, { 
+  useNewUrlParser: true,
+  useUnifiedTopology: true 
+});
 
 mongoose.connection.on('error', (err) => {
   throw err;
