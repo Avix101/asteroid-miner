@@ -31,10 +31,10 @@ const dbURL = process.env.MONGODB_URI || 'mongodb://localhost/AsteroidMiner';
 const redisSecret = process.env.REDIS_SECRET || 'verysecretkey';
 
 // Connect to Mongo DB using mongoose
-mongoose.connect(dbURL, (err) => {
-  if (err) {
-    throw err;
-  }
+mongoose.connect(dbURL, { useNewUrlParser: true });
+
+mongoose.connection.on('error', (err) => {
+  throw err;
 });
 
 // Grab environment variables for redis if they exist
