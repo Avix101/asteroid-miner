@@ -45,7 +45,7 @@
     "helmet": "^3.12.0",
     "mongoose": "^5.12.14",
     "serve-favicon": "^2.5.0",
-    "socket.io": "^2.4.1",
+    "socket.io": "^2.5.0",
     "underscore": "^1.13.1",
     "xxhashjs": "^0.2.2"
   },
